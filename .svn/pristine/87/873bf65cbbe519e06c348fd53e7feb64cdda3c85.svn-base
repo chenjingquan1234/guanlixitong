@@ -1,0 +1,242 @@
+<template>
+  <div id="two">
+    <div v-if="show" key="tabOne">
+    <div class="pb-nav">
+      <el-button size="mini" type="info" icon="el-icon-user" @click="division()">分班</el-button>
+      <el-button size="mini" type="info" icon="el-icon-setting" @click="set()">班组设置</el-button>
+    </div>
+    <!-- 表格 -->
+    <vxe-table :data="tableData" style="margin-top: 10px; width: 100%; box-shadow: 5px 5px 20px #dcdfe6" size="mini" align="center" ref="xTable" row-id="id"
+    :loading="loading" highlight-hover-row border :select-config="{reserve: true}">
+      <vxe-table-column type="selection" width="100"></vxe-table-column>
+      <vxe-table-column field="class_name" title="班组"></vxe-table-column>
+      <vxe-table-column field="name" title="姓名" width="500"></vxe-table-column>
+      <vxe-table-column field="work_type_name" title="工种" width="500"></vxe-table-column>
+    </vxe-table>
+    <!-- 分页器 -->
+    <vxe-pager
+      :loading="loading"
+      :current-page="tablePage.currentPage"
+      :page-size="tablePage.pageSize"
+      :total="tablePage.totalResult"
+      :layouts="['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']"
+      @page-change="handlePageChange">
+    </vxe-pager>
+    </div>
+
+    <div v-else key="tabTwo">
+    <div class="pb-nav">
+      <el-tooltip content="返回班组管理"><el-button size="mini" icon="el-icon-d-arrow-left" @click="res()"></el-button></el-tooltip>
+      <el-tooltip content="添加"><el-button size="mini" type="primary" icon="el-icon-plus" @click="modify(null, 1)"></el-button></el-tooltip>
+    </div>
+    <!-- 表格1 -->
+    <vxe-table :data="tableData1" style="margin-top: 10px; width: 100%; box-shadow: 5px 5px 20px #dcdfe6" size="mini" align="center" ref="xTable1" row-id="id"
+    :loading="loading" highlight-hover-row border :select-config="{reserve: true}">
+      <vxe-table-column type="selection" width="100"></vxe-table-column>
+      <vxe-table-column field="class_name" title="班组"></vxe-table-column>
+      <vxe-table-column field="create_time" title="创建时间" width="600"></vxe-table-column>
+      <vxe-table-column title="设置" width="150">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" @click.native.prevent="modify(scope, 2)">修改</el-button>
+          <el-button size="mini" type="text" @click.native.prevent="del(scope)">删除</el-button>
+        </template>
+      </vxe-table-column>
+    </vxe-table>
+    <!-- 分页器1 -->
+    <vxe-pager
+      :loading="loading"
+      :current-page="tablePage1.currentPage1"
+      :page-size="tablePage1.pageSize1"
+      :total="tablePage1.totalResult1"
+      :layouts="['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']"
+      @page-change="handlePageChange1">
+    </vxe-pager>
+    </div>
+    <!-- 分班设置 -->
+    <el-dialog title="分班设置" :visible.sync="dialog" width="25%">
+      <vxe-table :data="allClass" size="mini" align="center" ref="xTable2" row-id="id" :show-header="false"
+      :loading="loading" highlight-hover-row border :select-config="{reserve: true}">
+        <vxe-table-column type="radio" width="100"></vxe-table-column>
+        <vxe-table-column field="class_name" title="班组"></vxe-table-column>
+      </vxe-table>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="dialog = false">取 消</el-button>
+      <el-button type="primary" @click="determine(1)">确 定</el-button>
+    </div>
+    </el-dialog>
+    <!-- 增加修改班组 -->
+    <el-dialog title="班组设置" :visible.sync="dialog1" width="25%">
+    <el-input v-model="add_class"><template slot="prepend">班组名称</template></el-input>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="dialog1 = false">取 消</el-button>
+      <el-button type="primary" @click="determine()">确 定</el-button>
+    </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+export default{
+  name: "two",
+  data(){
+    return{
+      add_class: "",//添加班组
+      allClass: [],//班组列表
+      tableData: [],
+      tableData1: [],
+      tablePage: {
+        currentPage: 1,
+        pageSize: 10,
+        totalResult: 0
+      },
+      tablePage1: {
+        currentPage1: 1,
+        pageSize1: 10,
+        totalResult1: 0
+      },
+      loading: false,
+      show: true,
+      dialog: false,
+      dialog1: false
+    }
+  },
+  methods: {
+    set: function(){
+      this.findList1();
+      this.show = false;
+    },
+    res: function(){
+      this.show = true;
+    },
+    division: function(key){
+      var value = this.$refs.xTable.getSelectRecords();
+      var lengths = this.$refs.xTable.getSelectRecords().length;
+      if(lengths === 0){
+        this.$message.warning("请至少选择一项操作");
+      }
+      else{
+        this.dialog = true;
+        this.$http.get(this.$store.state.domainName_http+"/StoreAdmin/Staff/getStoreClassSelect", {withCredentials: true})
+        .then((data)=>{
+          this.allClass = data.data.data;
+        })
+        .catch((data)=>{
+          tihs.$message("网络错误 请再次尝试!");
+        })
+      }
+    },
+    modify: function(scope, key){
+      sessionStorage.class_id = "";
+      if(key === 2){
+        sessionStorage.class_id = scope.row.id;
+        sessionStorage.class_add_type = key;
+        this.add_class = scope.row.class_name;
+      }
+      else if(key === 1){
+        this.add_class = "";
+        sessionStorage.class_add_type = key;
+      }
+      this.dialog1 = true;
+    },
+    del: function(scope){
+      this.loading = true;
+      this.$http.post(this.$store.state.domainName_http+"/StoreAdmin/Staff/delStoreClass", {id: scope.row.id}, {withCredentials: true})
+      .then((data)=>{
+        this.findList1();
+        this.$message.success("删除成功");
+        this.dialog1 = false;
+        this.loading = false;
+      })
+      .catch((data)=>{
+        tihs.$message("网络错误 请再次尝试!");
+        this.loading = false;
+      })
+    },
+    determine: function(key){
+      if(key === 1){
+        var value = this.$refs.xTable.getSelectRecords();
+        var cid = this.$refs.xTable2.getRadioRow().id;
+        var ids = [];
+        for(var key in value){
+          ids.push(value[key].id);
+        }
+        var id = ids.join();
+        this.loading = true;
+        this.$http.post(this.$store.state.domainName_http+"/StoreAdmin/Staff/updateClass", {id: id, cid: cid}, {withCredentials: true})
+        .then((data)=>{
+          this.findList();
+          this.$message.success("成功");
+          this.dialog = false;
+          this.loading = false;
+        })
+        .catch((data)=>{
+          tihs.$message("网络错误 请再次尝试!");
+          this.loading = false;
+        })
+      }
+      else if(key === 2){
+        this.loading = true;
+        this.$http.post(this.$store.state.domainName_http+"/StoreAdmin/Staff/storeClassEdit", {add_type: sessionStorage.class_add_type, id: sessionStorage.class_id, class_name: this.add_class}, {withCredentials: true})
+        .then((data)=>{
+          this.findList1();
+          this.$message.success("成功");
+          this.dialog1 = false;
+          this.loading = false;
+        })
+        .catch((data)=>{
+          tihs.$message("网络错误 请再次尝试!");
+          this.loading = false;
+        })
+      }
+    },
+    //分页
+    findList: function(){
+      this.loading = true;
+      this.$http.get(this.$store.state.domainName_http+"/StoreAdmin/Staff/getStoreClassList?page="+this.tablePage.currentPage+"&quantity="+this.tablePage.pageSize, {withCredentials: true})
+      .then((data)=>{
+        this.tablePage.totalResult = data.data.data.total;
+        this.tableData = data.data.data.data;
+        this.loading = false;
+      })
+      .catch((data)=>{
+        tihs.$message("网络错误 请再次尝试!");
+        this.loading = false;
+      })
+    },
+    handlePageChange: function({currentPage, pageSize}){
+      this.tableData = [];
+      this.tablePage.currentPage = currentPage;
+      this.tablePage.pageSize = pageSize;
+      this.findList();
+    },
+    findList1: function(){
+      this.loading = true;
+      this.$http.get(this.$store.state.domainName_http+"/StoreAdmin/Staff/getClassList?page="+this.tablePage1.currentPage1+"&quantity="+this.tablePage1.pageSize1, {withCredentials: true})
+      .then((data)=>{
+        this.tablePage1.totalResult1 = data.data.data.total;
+        this.tableData1 = data.data.data.data;
+        this.loading = false;
+      })
+      .catch((data)=>{
+        tihs.$message("网络错误 请再次尝试!");
+        this.loading = false;
+      })
+    },
+    handlePageChange1: function({currentPage, pageSize}){
+      this.tableData1 = [];
+      this.tablePage1.currentPage1 = currentPage;
+      this.tablePage1.pageSize1 = pageSize;
+      this.findList1();
+    }
+  },
+  created(){
+    this.findList();
+  }
+}
+</script>
+
+<style scoped>
+#two{
+  margin: 1rem 5rem;
+}
+</style>

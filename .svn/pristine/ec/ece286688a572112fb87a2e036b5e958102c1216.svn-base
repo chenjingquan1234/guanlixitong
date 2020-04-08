@@ -1,0 +1,229 @@
+<template>
+  <div id="cashRegister_kehuziliao">
+    <div class="pb-nav">
+      <el-button size="mini" type="primary" icon="el-icon-plus" @click="modify(null, 1)">新增</el-button>
+      <el-button size="mini" @click="modify_manager">修改客户经理</el-button>
+      <el-button size="mini" type="primary" @click="start">启用</el-button>
+      <el-button size="mini" type="danger" @click="stop">停用</el-button>
+      <el-input style="width: 20rem;" size="mini" placeholder="可按姓名/手机/车牌进行搜索" v-model="key_name"><label slot="prepend">关键字</label></el-input>
+      <el-select v-model="manager_name" size="mini" clearable placeholder="客户经理" @change="manager_change">
+        <el-option v-for="value in manager_select" :key="value.eid" :label="value.name" :value="value.eid"></el-option>
+      </el-select>
+      <el-select v-model="is_name" size="mini" clearable placeholder="是否停用" @change="is_change">
+        <el-option v-for="value in is_select" :key="value.id" :label="value.is_name" :value="value.id"></el-option>
+      </el-select>
+      <el-select v-model="store_name" size="mini" clearable placeholder="所属门店" @change="store_change">
+        <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+      </el-select>
+      <el-button size="mini" type="primary" @click="search">查询</el-button>
+    </div>
+    <mytable :tableTitle="tableTitle" :tableData="tableData" :check_box="check_box" :operation_del="operation_del"
+    @modify="modify" @resData="resData" @handlePageChange="handlePageChange" ref="mytable"></mytable>
+    <newCustomer :new_dialog.sync="new_dialog" :add_type="add_type" :new_id="new_id" :modify_data="modify_data" @cancel="cancel" @determine="determine" ref="newCustomer"></newCustomer>
+
+    <el-dialog title="修改客户经理" :visible.sync="dialog" width="20%">
+      <el-select style="width: 100%;" v-model="modify_manager_name" size="mini" clearable placeholder="客户经理" @change="modify_manager_change">
+        <el-option v-for="value in modify_manager_select" :key="value.eid" :label="value.name" :value="value.eid"></el-option>
+      </el-select>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog=false">取 消</el-button>
+        <el-button type="primary" @click="dialog_enter">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "./../mytable.vue"
+import newCustomer from "./cashRegister_weixiukaidan/newCustomer.vue"
+export default{
+  name: "cashRegister_kehuziliao",
+  components:{
+    mytable,
+    newCustomer
+  },
+  data(){
+    return{
+      key_name: "",
+      store_name: "",
+      store_id: "",
+      store_select: [],
+      manager_name: "",
+      manager_id: "",
+      manager_select: [],
+      is_name: "启用",
+      is_id: 1,
+      is_select: [{id: 0, is_name: "停用"}, {id: 1, is_name: "启用"}],
+      new_dialog: false,
+      dialog: false,
+      add_type: 1,
+      new_id: "",
+      modify_data: {},
+      tableTitle: [
+        {key: "name", title: "客户姓名", min_width: "100"},
+        {key: "wechat_name", title: "微信昵称", min_width: "100"},
+        {key: "sex", title: "性别", min_width: "100"},
+        {key: "tel", title: "手机", min_width: "100"},
+        {key: "source_name", title: "客户来源", min_width: "100"},
+        {key: "type_name", title: "客户类型", min_width: "100"},
+        {key: "ename", title: "客户经理", min_width: "100"},
+        {key: "car", title: "车牌", min_width: "100"},
+        {key: "vin", title: "车架号", min_width: "100"},
+        {key: "p_chexingmingcheng", title: "品牌车型", min_width: "100"},
+        {key: "insurance_endtime", title: "保险到期", min_width: "100"},
+        {key: "status", title: "状态", min_width: "100"},
+        {key: "last_time", title: "上次到店", min_width: "100"},
+        {key: "before_time", title: "未到店天数", min_width: "100"},
+        {key: "create_time", title: "创建时间", min_width: "100"},
+        {key: "store_name", title: "所属门店", min_width: "100"},
+      ],
+      tableData: [],
+      check_box: false,
+      operation_del: false,
+
+      modify_manager_name: "",
+      modify_manager_id: "",
+      modify_manager_select: []
+    }
+  },
+  methods:{
+    store_change(s){
+      this.store_id = s;
+    },
+    manager_change(s){
+      this.manager_id = s;
+    },
+    modify_manager_change(s){
+      this.modify_manager_id = s;
+    },
+    is_change(s){
+      this.is_id = s;
+    },
+    search(){
+      this.handlePageChange({status: this.is_id, search: this.key_name, manager_id: this.manager_id, sid: this.store_id});
+    },
+    cancel(data){
+      this.new_dialog = data;
+    },
+    modify(value, add_type){
+      this.add_type = add_type;
+      if(add_type === 1){
+        this.new_dialog = true;
+        this.modify_data = {};
+        this.$nextTick(()=>{this.$refs.newCustomer.init();})
+      }
+      else if(add_type === 2){
+        if(value.row.id === undefined){return this.$message.warning("请选择客户")}
+        this.new_id = value.row.id;
+        this.$api.HttpPost("/StoreAdmin/Customer/getCustomerUpdatePage", {id: value.row.id})
+        .then((data)=>{
+          if(data.data.code === 200){
+            this.modify_data = data.data.data.detail;
+            this.$nextTick(()=>{
+              this.$refs.newCustomer.init();
+            })
+            this.new_dialog = true;
+          }
+          else{
+            this.$message.error(data.data.msg);
+          }
+        })
+      }
+    },
+    determine(data){
+      let customer_car_data = data;
+      this.$api.HttpPost("/StoreAdmin/Customer/customerEdit", customer_car_data)
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.new_dialog = false;
+          this.$api.HttpPost("/StoreAdmin/Order/getMemberInfo", {id: data.data.data})
+          .then((data)=>{
+            if(data.data.code === 200){
+              this.search();
+              this.tableData = data.data.data;
+            }
+            else{
+              this.$message.error(data.data.msg)
+            }
+          })
+        }
+        else{
+          this.$message.error(data.data.msg)
+        }
+      })
+    },
+    modify_manager(){
+      let id = this.$refs.mytable.$refs.xTable.getCurrentRow();
+      if(id === null){return this.$message.warning("请选择客户")}
+      this.dialog = true;
+    },
+    dialog_enter(){
+      let id = this.$refs.mytable.$refs.xTable.getCurrentRow().id;
+      this.$api.HttpPost("/StoreAdmin/Client/changeMemberManager", {id: id, manager_id: this.modify_manager_id})
+      .then((data)=>{
+         this.search();
+         this.dialog = false;
+      })
+    },
+    stop(){
+      let id = this.$refs.mytable.$refs.xTable.getCurrentRow().id;
+      this.$api.HttpPost("/StoreAdmin/Client/stopMember", {id: id})
+      .then((data)=>{
+         this.search();
+         this.$message(data.data.msg);
+      })
+    },
+    start(){
+      let id = this.$refs.mytable.$refs.xTable.getCurrentRow().id;
+      this.$api.HttpPost("/StoreAdmin/Client/startMember", {id: id})
+      .then((data)=>{
+         this.search();
+         this.$message(data.data.msg);
+      })
+    },
+    resData(data){
+      this.tableData = data;
+      for(let i in this.tableData){
+        this.tableData[i].car = this.tableData[i].plate_id + this.tableData[i].license_plate_number;
+        if(this.tableData[i].sex == 2){
+          this.tableData[i].sex = "女";
+        }
+        else if(this.tableData[i].sex == 1){
+          this.tableData[i].sex = "男";
+        }
+        else if(this.tableData[i].sex == 0){
+          this.tableData[i].sex = "保密";
+        }
+        if(this.tableData[i].status == 0){
+          this.tableData[i].status = "停用";
+        }
+        else if(this.tableData[i].status == 1){
+          this.tableData[i].status = "启用";
+        }
+      }
+    },
+    handlePageChange(data){
+      if(data === undefined){data = {}}
+      this.$refs.mytable.findList(this.$api.yuming + "/StoreAdmin/Client/getMemberList", data);
+    }
+  },
+  mounted(){
+    this.$axios.all([
+      this.$api.HttpPost("/StoreAdmin/Common/getStoreSelect", {}),
+      this.$api.HttpPost("/StoreAdmin/Common/getEmployeeSelect", {})
+    ])
+    .then((data)=>{
+      this.store_select = data[0].data;
+      this.manager_select = data[1].data;
+      this.modify_manager_select = data[1].data;
+    })
+    this.handlePageChange();
+  }
+}
+</script>
+
+<style scoped>
+#cashRegister_kehuziliao{
+  margin: 1rem 5rem;
+}
+</style>

@@ -1,0 +1,137 @@
+<!-- 
+使用： 父组件定义 v-model
+  demo： 
+    data: times: {}
+    const {start_time, end_time} = this.times
+ -->
+<template>
+  <div>
+    <el-input :placeholder="placeholder" :disabled="disabled" :size="size" v-model="value"  @input="search">
+      <template slot="prepend" v-if="showPrepend">{{title}}</template>
+      <el-dropdown @visible-change="visibleChange" slot="append" :trigger="trigger" ref="dropdown" :placement="placement">
+        <label class="el-icon-arrow-down el-icon--right"></label>
+        <el-dropdown-menu slot="dropdown">
+          <mytable
+            :tableTitle="tableTitle"
+            :tableData="tableData"
+            :check_box="false"
+            :operation="false"
+            @resData="resData"
+            @handlePageChange="handlePageChange"
+            @cell_click="cell_click"
+            ref="mytable"
+          ></mytable>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </el-input>
+  </div>
+</template>
+
+<script>
+import mytable from "../mytable";
+export default {
+  name: "BaseSearch",
+  components: {
+    mytable
+  },
+  model: {
+    prop: "inputModel",
+    event: "emitInput"
+  },
+  props: {
+    tableTitle: {
+      type: Array,
+      default: () => {
+        [];
+      },
+    },
+    url: {
+      type: String
+    },
+    size: {
+      type: String,
+      default: "mini"
+    },
+    title: {
+      type: String,
+      default: "搜索"
+    },
+    inputModel: {
+      type: String
+    },
+    showPrepend: {
+      type: Boolean,
+      default: true
+    },
+    placement: {
+      type: String,
+      default: "bottom-end"
+    },
+    placeholder: {
+      type: String,
+      default: "请输入内容"
+    },
+    fieldValue: {
+      type: String,
+      default: "name"
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    },
+    trigger: {
+      type: String,
+      default: "hover"
+    },
+    callback: {
+      type: Function,
+      default: null
+    }
+  },
+  data() {
+    return {
+      tableData: [],
+      value:""
+    };
+  },
+  mounted() {},
+  methods: {
+    visibleChange(val) {
+      if(val &&  this.tableData.length === 0) {
+        this.handlePageChange({search: this.value })
+        }
+    },
+    search(text) {
+      this.value ? this.$refs.dropdown.show() : this.$refs.dropdown.hide();
+      this.handlePageChange({ search: this.value });
+      this.$emit("emitInput", text);
+      console.log(12)
+    },
+    handlePageChange(data = {}) {
+      this.$refs.mytable.findList(this.$api.yuming + this.url, data);
+    },
+    resData(data) {
+      this.tableData = this.callback ? this.callback(data) : data
+      console.log(this.tableData)
+    },
+    cell_click(row, column) {
+      this.$refs.dropdown.hide();
+      this.$emit("getCellData", row, column);
+    },
+    // focus() {
+    //   this.$refs.dropdown.show() 
+    //   this.handlePageChange({search: this.value })
+    // }
+  },
+  watch:{
+    inputModel: {
+      handler(val) {
+        this.value = val
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+</style>

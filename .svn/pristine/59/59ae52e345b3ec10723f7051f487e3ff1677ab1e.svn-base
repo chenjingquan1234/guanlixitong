@@ -1,0 +1,117 @@
+<template>
+  <div id="Finance_peijianbaobiao">
+    <div class="pb-nav">
+      <el-button size="mini" type="info" icon="el-icon-download" @click="download()">打印</el-button>
+      <el-input size="mini" style="width: 20rem;" v-model="key_name"><label slot="prepend">关键字</label></el-input>
+      <el-date-picker size="mini"
+        v-model="begin_date"
+        align="right"
+        type="date"
+        placeholder="开始日期|时间"
+        :picker-options="pickerOptions">
+      </el-date-picker>
+      <el-date-picker size="mini"
+        v-model="over_date"
+        align="right"
+        type="date"
+        placeholder="结束日期|时间"
+        :picker-options="pickerOptions">
+      </el-date-picker>
+      <el-select size="mini" v-model="type_name" placeholder="所属类型" @change="type_change">
+        <el-option v-for="value in type_select" :key="value.id" :label="value.type_name" :value="value.id"></el-option>
+      </el-select>
+      <el-select size="mini" v-model="store_name" placeholder="所属门店" @change="store_change">
+        <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+      </el-select>
+      <el-button size="mini" type="primary" @click="search()">查询</el-button>
+    </div>
+
+    <mytable :tableTitle="tableTitle" :tableData="tableData" :operation="operation" @resData="resData" @handlePageChange="handlePageChange" ref="mytable"></mytable>
+  </div>
+</template>
+
+<script>
+import mytable from "./../mytable.vue"
+export default{
+  name: "Finance_peijianbaobiao",
+  components:{
+    mytable
+  },
+  data(){
+    return{
+      begin_date: new Date(2019, 0, 1, 0, 0),
+      over_date: new Date(),
+      pickerOptions: {
+        disabledDate(time){return time.getTime() > Date.now();},
+        shortcuts: [{text: '今天',onClick(picker) {picker.$emit('pick', new Date());}},
+        {text: '昨天',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24);picker.$emit('pick', date);}},
+        {text: '一周前',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);picker.$emit('pick', date);}}]
+      },
+      tableTitle: [
+        {key: "order_sn", title: "工单号", min_width: "100"},
+        {key: "name", title: "客户姓名", min_width: "100"},
+        {key: "license_plate_number", title: "车牌号", min_width: "100"},
+        {key: "repair_type_name", title: "类型", min_width: "100"},
+        {key: "vin", title: "车架号", min_width: "100"},
+        {key: "product_code", title: "编码", min_width: "100"},
+        {key: "product_name", title: "项目", min_width: "100"},
+        {key: "quantity", title: "数量", min_width: "100"},
+        {key: "price", title: "金额", min_width: "100"},
+        {key: "wholesale_price", title: "成本", min_width: "100"},
+        {key: "status", title: "状态", min_width: "100"},
+        {key: "update_time", title: "操作时间", min_width: "100"},
+        {key: "ename", title: "(领料/退料)人", min_width: "100"},
+        {key: "cname", title: "仓管", min_width: "100"},
+      ],
+      tableData: [],
+      operation: false,
+      //数据
+      key_name: "",
+      type_name: "",
+      type_id: "",
+      type_select: [{id: 0, type_name: "未结算"}, {id: 1, type_name: "已结算"}],
+      store_name: "",
+      store_id: "",
+      store_select: []
+    }
+  },
+  methods:{
+    type_change: function(s){
+      this.type_id = s;
+    },
+    store_change: function(s){
+      this.store_id = s;
+    },
+    search: function(){
+      this.handlePageChange({search: this.key_name, sid: this.store_id, status: this.type_id});
+    },
+    download: function(){
+      this.$refs.mytable.$refs.xTable.exportData({type: "csv"});
+    },
+    resData: function(data){
+      this.tableData = data;
+      for(let i in this.tableData){
+        if(this.tableData[i].status == 0){this.tableData[i].status = "未结算"}
+        else if(this.tableData[i].status == 1){this.tableData[i].status = "已结算"}
+      }
+    },
+    handlePageChange: function(data){
+      if(data === undefined){data = {}}
+      this.$refs.mytable.findList(this.$api.yuming + "/StoreAdmin/Financial/getPartsDetailedList", data);
+    }
+  },
+  mounted(){
+    this.$api.HttpPost("/StoreAdmin/Common/getStoreSelect", {})
+    .then((data)=>{
+      this.store_select = data.data;
+    })
+    this.handlePageChange();
+  }
+}
+</script>
+
+<style scoped>
+#Finance_peijianbaobiao{
+  margin: 1rem 5rem;
+}
+</style>

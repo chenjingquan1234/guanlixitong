@@ -1,0 +1,193 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+
+import enter from './../components/enter.vue'
+import home from './../components/home.vue'
+
+import sgd from './../components/other/sgd.vue'
+import jsd from './../components/other/jsd.vue'
+
+import cashRegister_weixiukaidan from "./../components/cashRegister/cashRegister_weixiukaidan.vue"
+import cashRegister_weixiuyewu from "./../components/cashRegister/cashRegister_weixiuyewu.vue"
+import cashRegister_kuaijiekaidan from "./../components/cashRegister/cashRegister_kuaijiekaidan.vue"
+import cashRegister_jiancabaogaomingxibiao from "./../components/cashRegister/cashRegister_jiancabaogaomingxibiao.vue"
+import cashRegister_kehuziliao from "./../components/cashRegister/cashRegister_kehuziliao.vue"
+import cashRegister_gukeyuyue from "./../components/cashRegister/cashRegister_gukeyuyue.vue"
+import cashRegister_kehujicun from "./../components/cashRegister/cashRegister_kehujicun.vue"
+import cashRegister_jinriyingyeer from "./../components/cashRegister/cashRegister_jinriyingyeer.vue"
+import cashRegister_kehudinghuo from "./../components/cashRegister/cashRegister_kehudinghuo.vue"
+import cashRegister_weixiuhuifang from "./../components/cashRegister/cashRegister_weixiuhuifang.vue"
+import cashRegister_kehukanban from "./../components/cashRegister/cashRegister_kehukanban.vue"
+
+import Member_shezhikazhong from "./../components/Member/Member_shezhikazhong.vue"
+import Member_shezhikazhongOne from "./../components/Member/Member_shezhikazhong/one.vue"
+import Member_shezhikazhongTwo from "./../components/Member/Member_shezhikazhong/two.vue"
+import Member_huiyuanbanka from "./../components/Member/Member_huiyuanbanka.vue"
+import Member_huiyuanbankaOne from "./../components/Member/Member_huiyuanbanka/one.vue"
+import Member_jifenguanli from "./../components/Member/Member_jifenguanli.vue"
+import Member_jifenguanliOne from "./../components/Member/Member_jifenguanli/one.vue"
+import Member_jifenguanliTwo from "./../components/Member/Member_jifenguanli/two.vue"
+import Member_jifenguanliThree from "./../components/Member/Member_jifenguanli/three.vue"
+import Member_jifenguanliFour from "./../components/Member/Member_jifenguanli/four.vue"
+import Member_jifenguanliFive from "./../components/Member/Member_jifenguanli/five.vue"
+import Member_huiyuangongju from "./../components/Member/Member_huiyuangongju.vue"
+import Member_huiyuangongjuOne from "./../components/Member/Member_huiyuangongju/one.vue"
+import Member_tongji from "./../components/Member/Member_tongji.vue"
+
+import Stock_jichushezhi from "./../components/Stock/Stock_jichushezhi.vue"
+import Stock_jichushezhiOne from "./../components/Stock/Stock_jichushezhi/one.vue"
+import Stock_jichushezhiTwo from "./../components/Stock/Stock_jichushezhi/two.vue"
+import Stock_jichushezhiThree from "./../components/Stock/Stock_jichushezhi/three.vue"
+import Stock_caigouruku from "./../components/Stock/Stock_caigouruku.vue"
+import Stock_lingliaochuku from "./../components/Stock/Stock_lingliaochuku.vue"
+import Stock_kucuntongji from "./../components/Stock/Stock_kucuntongji.vue"
+import Stock_baosunguanli from "./../components/Stock/Stock_baosunguanli.vue"
+import Stock_caigoutuihuo from "./../components/Stock/Stock_caigoutuihuo.vue"
+import Stock_tiaoboguanli from "./../components/Stock/Stock_tiaoboguanli.vue"
+import Stock_kucunpandian from "./../components/Stock/Stock_kucunpandian.vue"
+import Stock_guketuihuo from "./../components/Stock/Stock_guketuihuo.vue"
+
+import Achievements_yuangongguanli from "./../components/Achievements/Achievements_yuangongguanli.vue"
+import Achievements_yejibaobiao from "./../components/Achievements/Achievements_yejibaobiao.vue"
+import Achievements_gongzibaobiao from "./../components/Achievements/Achievements_gongzibaobiao.vue"
+import Achievements_maolibaobiao from "./../components/Achievements/Achievements_maolibaobiao.vue"
+import Achievements_jixiaogongneng from "./../components/Achievements/Achievements_jixiaogongneng.vue"
+import Achievements_ticheng from "./../components/Achievements/Achievements_ticheng.vue"
+
+import Finance_yingyehuizong from "./../components/Finance/Finance_yingyehuizong.vue"
+import Finance_peijianbaobiao from "./../components/Finance/Finance_peijianbaobiao.vue"
+import Finance_zhangdanbaobiao from "./../components/Finance/Finance_zhangdanbaobiao.vue"
+import Finance_baoxiaoguanli from "./../components/Finance/Finance_baoxiaoguanli.vue"    
+import Finance_baozhangyinshou from "./../components/Finance/Finance_baozhangyinshou.vue"  
+import Finance_maolitongji from "./../components/Finance/Finance_maolitongji.vue"  
+import Finance_caigouyingfu from "./../components/Finance/Finance_caigouyingfu.vue"
+
+import Operate_gudongfenhong from "./../components/Operate/Operate_gudongfenhong.vue"
+import Operate_yuangongfenhong from "./../components/Operate/Operate_yuangongfenhong.vue"
+import Operate_jikemosi from "./../components/Operate/Operate_jikemosi.vue"
+import Operate_jikemosiOne from "./../components/Operate/Operate_jikemosi/one.vue"
+import Operate_jikemosiTwo from "./../components/Operate/Operate_jikemosi/two.vue"
+import Operate_jikemosiThree from "./../components/Operate/Operate_jikemosi/three.vue"
+import Operate_jikemosiFour from "./../components/Operate/Operate_jikemosi/four.vue"
+
+import setUp_mendianguanli from "./../components/setUp/setUp_mendianguanli.vue"
+import setUp_quanxianshezhi from "./../components/setUp/setUp_quanxianshezhi.vue"
+import setUp_fuwuxiangmu from "./../components/setUp/setUp_fuwuxiangmu.vue"
+import setUp_jibenshezhi from "./../components/setUp/setUp_jibenshezhi.vue"
+import setUp_daorushuju from "./../components/setUp/setUp_daorushuju.vue"
+
+import Insurance_baoxianyewu from "./../components/Insurance/Insurance_baoxianyewu.vue"
+import Insurance_xinzengbaodan from "./../components/Insurance/Insurance_xinzengbaodan.vue"
+
+import Plan_qianzaixiangmuguanli from "./../components/Plan/qianzaixiangmuguanli.vue"
+import Plan_huifangguanli from "./../components/Plan/huifangguanli.vue"
+import Plan_tixingshezhi from "./../components/Plan/tixingshezhi.vue"
+
+import daolujiuyuan from "./../components/other/daolujiuyuan.vue"
+import youhuiquan from "./../components/other/youhuiquan.vue"
+import demo from "./../components/other/demo.vue" 
+import yuangongtongzhi from "./../components/other/yuangongtongzhi.vue" 
+
+Vue.use(Router)
+
+export default new Router({
+  mode: "history",
+  routes: [
+    {path: '/enter', name: 'enter', component: enter, meta: {keepAlive: false}},
+    {path: '/', name: "/", component: home, meta: {keepAlive: true}},
+
+    {path: '/daolujiuyuan', name: "daolujiuyuan", component: daolujiuyuan, meta: {keepAlive: true}},
+    {path: '/youhuiquan', name: "youhuiquan", component: youhuiquan, meta: {keepAlive: true}},
+    {path: '/demo', name: "demo", component: demo, meta: {keepAlive: true}}, 
+    {path: '/yuangongtongzhi', name: "yuangongtongzhi", component: yuangongtongzhi, meta: {keepAlive: true}},
+
+    //print
+    {path: '/jsd', name: "jsd", component: jsd, meta: {keepAlive: false}},
+    {path: '/sgd', name: "sgd", component: sgd, meta: {keepAlive: false}},
+
+    //cashRegister
+    {path: '/cashRegister_weixiukaidan', name: 'cashRegister_weixiukaidan', component: cashRegister_weixiukaidan, meta: {keepAlive: true}},
+    {path: '/cashRegister_weixiuyewu', name: 'cashRegister_weixiuyewu', component: cashRegister_weixiuyewu, meta: {keepAlive: true}},
+    {path: '/cashRegister_kuaijiekaidan', name: 'cashRegister_kuaijiekaidan', component: cashRegister_kuaijiekaidan, meta: {keepAlive: true}},
+    {path: '/cashRegister_jiancabaogaomingxibiao', name: 'cashRegister_jiancabaogaomingxibiao', component: cashRegister_jiancabaogaomingxibiao, meta: {keepAlive: true}},
+    {path: '/cashRegister_kehuziliao', name: 'cashRegister_kehuziliao', component: cashRegister_kehuziliao, meta: {keepAlive: true}},
+    {path: '/cashRegister_gukeyuyue', name: 'cashRegister_gukeyuyue', component: cashRegister_gukeyuyue, meta: {keepAlive: true}},
+    {path: '/cashRegister_kehujicun', name: 'cashRegister_kehujicun', component: cashRegister_kehujicun, meta: {keepAlive: true}},
+    {path: '/cashRegister_jinriyingyeer', name: 'cashRegister_jinriyingyeer', component: cashRegister_jinriyingyeer, meta: {keepAlive: true}},
+    {path: '/cashRegister_kehudinghuo', name: 'cashRegister_kehudinghuo', component: cashRegister_kehudinghuo, meta: {keepAlive: true}},
+    {path: '/cashRegister_weixiuhuifang', name: 'cashRegister_weixiuhuifang', component: cashRegister_weixiuhuifang, meta: {keepAlive: true}},
+    {path: '/cashRegister_kehukanban', name: 'cashRegister_kehukanban', component: cashRegister_kehukanban, meta: {keepAlive: true}},
+
+    //Member
+    {path: '/Member_shezhikazhong', name: 'Member_shezhikazhong', component: Member_shezhikazhong, meta: {keepAlive: true}},
+    {path: '/Member_shezhikazhong/one', name: 'Member_shezhikazhongOne', component: Member_shezhikazhongOne, meta: {keepAlive: true}},
+    {path: '/Member_shezhikazhong/two', name: 'Member_shezhikazhongTwo', component: Member_shezhikazhongTwo, meta: {keepAlive: true}},
+    {path: '/Member_huiyuanbanka', name: 'Member_huiyuanbanka', component: Member_huiyuanbanka, meta: {keepAlive: true}},
+    {path: '/Member_huiyuanbanka/one', name: 'Member_huiyuanbankaOne', component: Member_huiyuanbankaOne, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli', name: 'Member_jifenguanli', component: Member_jifenguanli, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli/one', name: 'Member_jifenguanliOne', component: Member_jifenguanliOne, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli/two', name: 'Member_jifenguanliTwo', component: Member_jifenguanliTwo, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli/three', name: 'Member_jifenguanliThree', component: Member_jifenguanliThree, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli/four', name: 'Member_jifenguanliFour', component: Member_jifenguanliFour, meta: {keepAlive: true}},
+    {path: '/Member_jifenguanli/five', name: 'Member_jifenguanliFive', component: Member_jifenguanliFive, meta: {keepAlive: true}},
+    {path: '/Member_huiyuangongju', name: 'Member_huiyuangongju', component: Member_huiyuangongju, meta: {keepAlive: true}},
+    {path: '/Member_huiyuangongju/one', name: 'Member_huiyuangongjuOne', component: Member_huiyuangongjuOne, meta: {keepAlive: true}},
+    {path: '/Member_tongji', name: 'Member_tongji', component: Member_tongji, meta: {keepAlive: true}},
+
+    //Stock
+    {path: '/Stock_jichushezhi', name: 'Stock_jichushezhi', component: Stock_jichushezhi, meta: {keepAlive: true}},
+    {path: '/Stock_jichushezhi/one', name: 'Stock_jichushezhiOne', component: Stock_jichushezhiOne, meta: {keepAlive: true}},
+    {path: '/Stock_jichushezhi/two', name: 'Stock_jichushezhiTwo', component: Stock_jichushezhiTwo, meta: {keepAlive: true}},
+    {path: '/Stock_jichushezhi/three', name: 'Stock_jichushezhiThree', component: Stock_jichushezhiThree, meta: {keepAlive: true}},
+    {path: '/Stock_caigouruku', name: 'Stock_caigouruku', component: Stock_caigouruku, meta: {keepAlive: true}},
+    {path: '/Stock_lingliaochuku', name: 'Stock_lingliaochuku', component: Stock_lingliaochuku, meta: {keepAlive: true}},
+    {path: '/Stock_kucuntongji', name: 'Stock_kucuntongji', component: Stock_kucuntongji, meta: {keepAlive: true}},
+    {path: '/Stock_baosunguanli', name: 'Stock_baosunguanli', component: Stock_baosunguanli, meta: {keepAlive: true}},
+    {path: '/Stock_caigoutuihuo', name: 'Stock_caigoutuihuo', component: Stock_caigoutuihuo, meta: {keepAlive: true}},
+    {path: '/Stock_tiaoboguanli', name: 'Stock_tiaoboguanli', component: Stock_tiaoboguanli, meta: {keepAlive: true}},,
+    {path: '/Stock_kucunpandian', name: 'Stock_kucunpandian', component: Stock_kucunpandian, meta: {keepAlive: true}},
+    {path: '/Stock_guketuihuo', name: 'Stock_guketuihuo', component: Stock_guketuihuo, meta: {keepAlive: true}},
+
+    //Achievements
+    {path: '/Achievements_yuangongguanli', name: 'Achievements_yuangongguanli', component: Achievements_yuangongguanli, meta: {keepAlive: true}},
+    {path: '/Achievements_yejibaobiao', name: 'Achievements_yejibaobiao', component: Achievements_yejibaobiao, meta: {keepAlive: true}},
+    {path: '/Achievements_gongzibaobiao', name: 'Achievements_gongzibaobiao', component: Achievements_gongzibaobiao, meta: {keepAlive: true}},
+    {path: '/Achievements_maolibaobiao', name: 'Achievements_maolibaobiao', component: Achievements_maolibaobiao, meta: {keepAlive: true}},
+    {path: '/Achievements_jixiaogongneng', name: 'Achievements_jixiaogongneng', component: Achievements_jixiaogongneng, meta: {keepAlive: true}},
+    {path: '/Achievements_ticheng', name: "Achievements_ticheng", component: Achievements_ticheng, meta: {keepAlive: true}},
+
+    //Finance
+    {path: '/Finance_yingyehuizong', name: 'Finance_yingyehuizong', component: Finance_yingyehuizong, meta: {keepAlive: true}},
+    {path: '/Finance_peijianbaobiao', name: 'Finance_peijianbaobiao', component: Finance_peijianbaobiao, meta: {keepAlive: true}},
+    {path: '/Finance_zhangdanbaobiao', name: 'Finance_zhangdanbaobiao', component: Finance_zhangdanbaobiao, meta: {keepAlive: true}}, 
+    {path: '/Finance_baoxiaoguanli', name: 'Finance_baoxiaoguanli', component: Finance_baoxiaoguanli, meta: {keepAlive: true}},
+    {path: '/Finance_baozhangyinshou', name: 'Finance_baozhangyinshou', component: Finance_baozhangyinshou, meta: {keepAlive: true}},   
+    {path: '/Finance_maolitongji', name: 'Finance_maolitongji', component: Finance_maolitongji, meta: {keepAlive: true}},  
+    {path: '/Finance_caigouyingfu', name: 'Finance_caigouyingfu', component: Finance_caigouyingfu, meta: {keepAlive: true}},
+
+    //Operate
+    {path: '/Operate_gudongfenhong', name: 'Operate_gudongfenhong', component: Operate_gudongfenhong, meta: {keepAlive: true}},
+    {path: '/Operate_yuangongfenhong', name: 'Operate_yuangongfenhong', component: Operate_yuangongfenhong, meta: {keepAlive: true}},
+    {path: '/Operate_jikemosi', name: 'Operate_jikemosi', component: Operate_jikemosi, meta: {keepAlive: true}},
+    {path: '/Operate_jikemosiOne', name: 'Operate_jikemosiOne', component: Operate_jikemosiOne, meta: {keepAlive: true}},
+    {path: '/Operate_jikemosiTwo', name: 'Operate_jikemosiTwo', component: Operate_jikemosiTwo, meta: {keepAlive: true}},
+    {path: '/Operate_jikemosiThree', name: 'Operate_jikemosiThree', component: Operate_jikemosiThree, meta: {keepAlive: true}},
+    {path: '/Operate_jikemosiFour', name: 'Operate_jikemosiFour', component: Operate_jikemosiFour, meta: {keepAlive: true}},
+
+    //setUp
+    {path: '/setUp_mendianguanli', name: 'setUp_mendianguanli', component: setUp_mendianguanli, meta: {keepAlive: true}},
+    {path: '/setUp_quanxianshezhi', name: 'setUp_quanxianshezhi', component: setUp_quanxianshezhi, meta: {keepAlive: true}},
+    {path: '/setUp_fuwuxiangmu', name: 'setUp_fuwuxiangmu', component: setUp_fuwuxiangmu, meta: {keepAlive: true}},
+    {path: '/setUp_jibenshezhi', name: 'setUp_jibenshezhi', component: setUp_jibenshezhi, meta: {keepAlive: true}},
+    {path: '/setUp_daorushuju', name: 'setUp_daorushuju', component: setUp_daorushuju, meta: {keepAlive: true}},
+
+    //Insurance
+    {path: '/Insurance_baoxianyewu', name: 'Insurance_baoxianyewu', component: Insurance_baoxianyewu, meta: {keepAlive: true}},
+    {path: '/Insurance_xinzengbaodan', name: 'Insurance_xinzengbaodan', component: Insurance_xinzengbaodan, meta: {keepAlive: true}},
+
+    //Plan
+    {path: '/Plan_qianzaixiangmuguanli', name: "Plan_qianzaixiangmuguanli", component: Plan_qianzaixiangmuguanli, meta: {keepAlive: true}},
+    {path: '/Plan_huifangguanli', name: "Plan_huifangguanli", component: Plan_huifangguanli, meta: {keepAlive: true}},
+    {path: '/Plan_tixingshezhi', name: "Plan_tixingshezhi", component: Plan_tixingshezhi, meta: {keepAlive: true}},
+  ]
+})

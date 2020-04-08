@@ -1,0 +1,173 @@
+<template>
+  <div id="qianzaixiangmuguanli">
+    <el-button size="mini" :type="is === 1?'success':''" round @click="bt(1)">潜在项目管理</el-button>
+    <el-button size="mini" :type="is === 2?'success':''" round @click="bt(2)">责任人分析</el-button>
+    <el-button size="mini" :type="is === 3?'success':''" round @click="bt(3)">潜在项目分析</el-button>
+
+    <div style="margin: 1rem 0;" v-if="is === 1?true:false"><qzxmgl :store_select="store_select" ref="qzxmgl"></qzxmgl></div>
+    <div style="margin: 1rem 0;" v-else>
+      <el-select size="mini" v-model="intentionality_name" clearable placeholder="意向度" @change="intentionality_change">
+        <el-option v-for="value in intentionality_select" :key="value.intentionality_name" :label="value.intentionality_name" :value="value.intentionality_name"></el-option>
+      </el-select>
+      <el-select size="mini" v-model="store_name" clearable placeholder="所属门店" @change="store_change">
+        <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+      </el-select>
+      <el-button size="mini" :type="is_time === 1?'primary':''" @click="bt_time(1)">今年</el-button>
+      <el-button size="mini" :type="is_time === 2?'primary':''" @click="bt_time(2)">今月</el-button>
+      <el-button size="mini" :type="is_time === 3?'primary':''" @click="bt_time(3)">今日</el-button>
+      <el-date-picker v-model="s_time" size="mini" type="datetimerange" clearable :picker-options="s_pickerOptions"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        align="right">
+      </el-date-picker>
+      <el-button size="mini" @click="search()" icon="el-icon-search" type="primary">查询</el-button>
+      <mytable :tableTitle="is === 2?tableTitle_zrr:tableTitle_qzxm" :tableData="tableData" :operation="operation" :check_box="check_box"
+      @cell_click="cell_click" @resData="resData" @handlePageChange="handlePageChange" ref="mytable"></mytable>
+    </div>
+    <Dialog :title="'潜在项目列表'" :width="'80%'" :footer="false" ref="dialog">
+      <template><qzxmgl :store_select="store_select" :iss="is" :id="id" ref="d_qzxmgl"></qzxmgl></template>
+    </Dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "./../mytable.vue"
+import Dialog from "./../other/Dialog.vue"
+import qzxmgl from "./qzxmgl.vue"
+export default{
+	name: "qianzaixiangmuguanli",
+  components:{
+    mytable,
+    Dialog,
+    qzxmgl
+  },
+	data(){
+		return{
+      is: 1,
+      id: null,
+      is_time: 1,
+      key_name: "",
+      store_name: "",
+      store_select: [],
+      intentionality_name: "",
+      intentionality_select: [
+        {intentionality_name: "高", d_intentionality_name: "高"},
+        {intentionality_name: "中", d_intentionality_name: "中"},
+        {intentionality_name: "低", d_intentionality_name: "低"}
+      ],
+      s_time: [],
+      s_pickerOptions: {
+        shortcuts: [{text: '最近一周',onClick(picker){const end = new Date();const start = new Date();start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);picker.$emit('pick', [start, end]);}},
+        {text: '最近一个月',onClick(picker) {const end = new Date();const start = new Date();start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);picker.$emit('pick', [start, end]);}},
+        {text: '最近三个月',onClick(picker) {const end = new Date();const start = new Date();start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);picker.$emit('pick', [start, end]);}}]
+      },
+      tableTitle_zrr: [
+        {key: "name", title: "责任人", min_width: "100"},
+        {key: "total_num", title: "项目次", min_width: "100"},
+        {key: "total_price", title: "项目金额", min_width: "100"},
+        {key: "store_name", title: "门店", min_width: "100"}
+      ],
+      tableTitle_qzxm: [
+        {key: "name", title: "潜在项目", min_width: "100"},
+        {key: "total_num", title: "项目次", min_width: "100"},
+        {key: "total_price", title: "项目金额", min_width: "100"},
+        {key: "store_name", title: "门店", min_width: "100"}
+      ],
+      tableData: [],
+      operation: false,
+      check_box: false,
+		}
+	},
+  methods:{
+    bt(s){
+      this.is = s;
+      if(this.is === 1){
+        this.$nextTick(()=>{
+          this.$refs.qzxmgl.handlePageChange();
+        })
+      }
+      else if(this.is === 2){
+        this.$nextTick(()=>{
+          this.handlePageChange({}, "/StoreAdmin/Report/analysisEmployee");
+        })
+      }
+      else if(this.is === 3){
+        this.$nextTick(()=>{
+          this.handlePageChange({}, "/StoreAdmin/Report/analysisPotential");
+        })
+      }
+    },
+    search(){
+      if(this.s_time === null){
+        this.s_time = [];
+        this.s_time[0] = "";
+        this.s_time[1] = "";
+      }
+      this.handlePageChange()
+    },
+    intentionality_change(s){
+      this.intentionality_id = s;
+    },
+    store_change(s){
+      this.store_name = s;
+    },
+    bt_time(s){
+      this.is_time = s;
+      if(this.is_time === 1){
+        this.s_time = [
+          new Date(new Date().getFullYear(), 0, 1),
+          new Date(new Date().getFullYear(), 11, 31)
+        ]
+      }
+      else if(this.is_time === 2){
+        this.s_time = [
+          new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          new Date(new Date().getFullYear(), new Date().getMonth()+1, 1)
+        ]
+      }
+      else if(this.is_time === 3){
+        this.s_time = [
+          new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()),
+          new Date()
+        ]
+      }
+    },
+    cell_click(row){
+      this.$refs.dialog.init();
+      if(this.is === 2){
+        this.id = row.row.eid;
+        this.$nextTick(()=>{
+          this.$refs.d_qzxmgl.search(this.is, row.row.eid);
+        })
+      }
+      if(this.is === 3){
+        this.id = row.row.check_event_id;
+        this.$nextTick(()=>{
+          this.$refs.d_qzxmgl.search(this.is, row.row.check_event_id);
+        })
+      }
+    },
+    resData(data){
+      this.tableData = data;
+    },
+    handlePageChange(data, url){
+      if(data === undefined){data = {sid: this.store_name, intention: this.intentionality_name, start_time: this.s_time[0], end_time: this.s_time[1]}}
+      this.$refs.mytable.findList(this.$api.yuming + url, data)
+    }
+  },
+  mounted(){
+    this.$api.HttpPost("/StoreAdmin/Common/getStoreSelect", {})
+    .then((data)=>{
+      this.store_select = data.data;
+    })
+    this.bt(1);
+  }
+}
+</script>
+
+<style scoped>
+#qianzaixiangmuguanli{
+  margin: 1rem 5rem;
+}
+</style>

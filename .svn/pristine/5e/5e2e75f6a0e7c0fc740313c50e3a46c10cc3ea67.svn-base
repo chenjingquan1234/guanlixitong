@@ -1,0 +1,243 @@
+<template>
+  <div id="one">
+    <div class="pb-nav">
+      <el-button size="mini" icon="el-icon-plus" @click="new_integral()">新增积分</el-button>
+      <el-button size="mini" icon="el-icon-plus" @click="integral_exchange()">积分兑换</el-button>
+      <el-input size="mini" v-model="key_name" placeholder="可按姓名,卡号,车牌号码,手机号码等进行搜索" style="width: 25rem;"><label slot="prepend">关键字</label></el-input>
+      <el-date-picker size="mini"
+       v-model="value1"
+       align="right"
+       type="date"
+       placeholder="开始时间"
+       :picker-options="pickerOptions">
+      </el-date-picker>
+      <el-date-picker size="mini"
+       v-model="value2"
+       align="right"
+       type="date"
+       placeholder="结束时间"
+       :picker-options="pickerOptions">
+      </el-date-picker>
+      <el-select size="mini" v-model="store_name" clearable placeholder="所属门店" @change="store_name_change">
+        <el-option v-for="value in store_name_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+      </el-select>
+      <el-button size="mini" type="primary" @click="search()">查询</el-button>
+   </div>
+   <mytable :tableTitle="tableTitle" :tableData="tableData" :check_box="check_box" :operation="operation" @cell_click="cell_click" @handlePageChange="handlePageChange" @resData="resData" ref="mytable"></mytable>
+
+    <!-- 弹出框 -->
+    <el-dialog title="新增积分" :visible.sync="dialog" width="30%" :close-on-click-modal="false">
+      <el-input size="mini" v-model="dialog_a"><label slot="prepend">新增积分</label></el-input>
+      <el-input size="mini" v-model="dialog_b" type="textarea" placeholder="备注"></el-input>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog=false">取 消</el-button>
+        <el-button type="primary" @click="enter()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog title="积分兑换" :visible.sync="dialog1" :close-on-click-modal="false">
+      <el-row :gutter="10">
+        <el-col :span="8">
+          <el-input size="mini" v-model="dialog1_a" disabled><label slot="prepend">客户姓名</label></el-input>
+          <el-input size="mini" v-model="dialog1_b" disabled><label slot="prepend">会员卡号</label></el-input>
+          <el-input size="mini" v-model="dialog1_c" disabled><label slot="prepend">当前积分</label></el-input>
+          <el-input size="mini" v-model="dialog1_d" disabled><label slot="prepend">兑换积分</label></el-input>
+        </el-col>
+        <el-col :span="16">
+          <vxe-table border highlight-hover-row :data="tableData1" :show-header="false" :select-config="{reserve: true, trigger: 'row'}" @cell-click="cell_click_" ref="dialog1_table">
+            <vxe-table-column type="selection" width="50"></vxe-table-column>
+            <vxe-table-column field="image" min-width="200"><template v-slot="{ row, rowIndex }"><img :src="row.image" style="width: 5rem; height: 5rem;"></template></vxe-table-column>
+            <vxe-table-column field="gift_name" min-width="100"></vxe-table-column>
+            <vxe-table-column field="gift_integral" min-width="100"></vxe-table-column>
+          </vxe-table>
+        </el-col>
+      </el-row>
+      <!-- 分页器 -->
+      <vxe-pager
+        :current-page="tablePage.currentPage"
+        :page-size="tablePage.pageSize"
+        :total="tablePage.totalResult"
+        :layouts="['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']"
+        @page-change="dialog1_page">
+      </vxe-pager>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog1=false">取 消</el-button>
+        <el-button type="primary" @click="enter_()">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "./../../mytable.vue"
+export default{
+  name: "one",
+  components:{
+    mytable,
+  },
+  data(){
+    return{
+      //时间
+      pickerOptions: {
+        disabledDate(time){return time.getTime() > Date.now();},
+        shortcuts: [{text: '今天',onClick(picker) {picker.$emit('pick', new Date());}},
+        {text: '昨天',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24);picker.$emit('pick', date);}},
+        {text: '一周前',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);picker.$emit('pick', date);}}]
+      },
+      value1: new Date(2019, 0, 1, 0, 0),
+      value2: new Date(),
+      //
+      key_name: "",
+      store_name: "",
+      store_id: "",
+      store_name_select: [],
+      //配置
+      tableTitle: [
+        {key: "name", title: "姓名", min_width: "100"},
+        {key: "license_plate_number", title: "车牌", min_width: "100"},
+        {key: "tel", title: "手机", min_width: "100"},
+        {key: "card_no", title: "卡号", min_width: "100"},
+        {key: "card_name", title: "卡类型", min_width: "100"},
+        {key: "integral", title: "系统积分", min_width: "100"},
+        {key: "operation_staff_name", title: "操作人", min_width: "100"},
+        {key: "create_time", title: "办卡日期", min_width: "100"},
+        {key: "store_name", title: "所属门店", min_width: "100"}
+      ],
+      tableData: [],
+      tableData1: [],
+      check_box: false,
+      operation: false,
+      tablePage: {
+        currentPage: 1,//当前页
+        pageSize: 20,//当前页数据
+        totalResult: 0//总数据
+      },
+      dialog: false,
+      dialog1: false,
+      //数据
+      cell: "",//获取当前选中列信息
+      card_id: "",
+      dialog_a: "",
+      dialog_b: "",
+      dialog1_a: "",
+      dialog1_b: "",
+      dialog1_c: "",
+      dialog1_d: "",
+      dialog1_select: []
+    }
+  },
+  methods:{
+    search: function(){
+      this.handlePageChange({sid: this.store_id, search: this.key_name, start_time: this.value1, end_time: this.value2});
+    },
+    store_name_change: function(s){
+      this.store_id = s;
+    },
+    new_integral: function(){
+      if(this.card_id === ""){
+        this.$message("请选择一项");
+      }
+      else{
+        this.dialog = true;
+      }
+    },
+    integral_exchange: function(){
+      if(this.card_id === ""){
+        this.$message("请选择一项");
+      }
+      else{
+        this.dialog1_a = this.cell.name;
+        this.dialog1_b = this.cell.card_no;
+        this.dialog1_c = this.cell.integral;
+        this.$api.HttpPost("/StoreAdmin/Integral/getIntegralGiftList", {page: this.tablePage.currentPage, quantity: this.tablePage.pageSize})
+        .then((data)=>{
+          if(data.data.code === 200){
+            this.tableData1 = data.data.data.data;
+            this.tablePage.totalResult = data.data.data.total;
+          }
+          else{
+            this.$message.error(data.data.msg)
+          }
+        })
+        this.dialog1 = true;
+      }
+    },
+    enter: function(){
+      this.$api.HttpPost("/StoreAdmin/Integral/addIntegral",
+      {id: this.card_id,
+      integral: this.dialog_a,
+      remark: this.dialog_b})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.dialog = false;
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    enter_: function(){
+      this.$api.HttpPost("/StoreAdmin/Integral/creditsExchange",
+      {id: this.card_id,
+      gift_id: this.dialog1_select})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.dialog = false;
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    cell_click: function(row, column){
+      this.cell = row.row;
+      this.card_id = row.row.id;
+    },
+    cell_click_: function(row, column){
+      let data = this.$refs.dialog1_table.getSelectRecords();
+      this.dialog1_select = data.map((item)=>{return item["id"]});
+    },
+    resData: function(data){
+      this.tableData = data;
+    },
+    handlePageChange: function(data){
+      if(data === undefined){data = {sid: this.store_id, search: this.key_name, start_time: this.value1, end_time: this.value2}}
+      this.$refs.mytable.findList(this.$api.yuming + "/StoreAdmin/Integral/getIntegralList", data);
+    },
+    //内部分页
+    findList: function(currentPage, pageSize){
+      this.$api.HttpPost("/StoreAdmin/Integral/getIntegralGiftList", {page: currentPage, quantity: pageSize})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.tableData1 = data.data.data.data;
+          this.tablePage.totalResult = data.data.data.total;
+        }
+        else{
+          this.$message.error(data.data.msg)
+        }
+      })
+    },
+    dialog1_page: function({currentPage, pageSize}){
+      this.tablePage.currentPage = currentPage;
+      this.tablePage.pageSize = pageSize;
+      this.findList(currentPage, pageSize);
+    }
+  },
+  mounted(){
+    this.handlePageChange({});
+    this.$api.HttpPost("/StoreAdmin/Common/getStoreSelect", {})
+    .then((data)=>{
+        this.store_name_select = data.data;
+    })
+  }
+}
+</script>
+
+<style scoped>
+#one{
+  margin: 1rem 5rem;
+}
+</style>

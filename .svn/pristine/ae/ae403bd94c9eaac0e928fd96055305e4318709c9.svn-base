@@ -1,0 +1,158 @@
+<template>
+  <div>
+    <div class="contation">
+      <div class="query-box">
+        <el-select v-model="status_value" clearable size="mini" placeholder="正常">
+          <el-option
+            v-for="(item,index) in status_list"
+            :key="index"
+            :label="item.status"
+            :value="item.value"
+          ></el-option>
+        </el-select>
+
+        <el-select v-model="unit_select" clearable size="mini" placeholder="请选择挂账单位">
+          <el-option
+            v-for="(item,index) in unit_select_list"
+            :key="index"
+            :label="item.unit_name"
+            :value="item.unit_name"
+          ></el-option>
+        </el-select>
+
+        <el-select v-model="store_value" clearable size="mini" placeholder="请选择所属门店">
+          <el-option
+            v-for="(item,index) in store_select"
+            :key="index"
+            :label="item.store_name"
+            :value="item.sid"
+          ></el-option>
+        </el-select>
+        <el-button type="primary" size="mini" @click="search" st yle="margin-left:10px">查询</el-button>
+      </div>
+      <mytable
+        :check_box="false"
+        :operation_mod="false"
+        operation_del_name="作废"
+        :tableTitle="tableTitle"
+        :tableData="tableData"
+        @cell_click="cell_click"
+        @del="del"
+        ref="mytable"
+        @resData="resData"
+        @handlePageChange="handlePageChange"
+      />
+    </div>
+  </div>
+</template>
+
+<script>
+import mytable from "./../../mytable.vue";
+export default {
+  name: "Third",
+  components: {
+    mytable
+  },
+  props: {
+    store_select: {
+      type: Array,
+      default: () => {
+        [];
+      }
+    }
+  },
+  data() {
+    return {
+      Custome_info:"",
+      store_value: "",
+      status_value: "",
+      unit_select: "",
+      tableTitle: [
+        { key: "unit_name", title: "挂账单位", min_width: "100" },
+        { key: "amount", title: "期初欠款", min_width: "100" },
+        { key: "create_time", title: "时间", min_width: "100" },
+        { key: "name", title: "操作人", min_width: "100" },
+        { key: "store_name", title: "门店", min_width: "100" },
+        { key: "status", title: "状态", min_width: "50" },
+        { key: "remark", title: "备注", min_width: "50" }
+      ],
+      tableData: [],
+      unit_select_list: [],
+      status_list: [
+        { status: "正常", value: 0 },
+        { status: "作废", value: 1 }
+      ]
+    };
+  },
+  mounted() {
+    // this.getCreditUnitList()
+    this.handlePageChange();
+    this.getCreditUnitSelect();
+  },
+  methods: {
+    getCreditUnitSelect() {
+      this.$api.HttpPost("/StoreAdmin/Credit/getCreditUnitSelect").then(v => {
+        let res = v.data;
+        if (res.code == 200) {
+          let data = res.data;
+          this.unit_select_list = data;
+        }
+      });
+    },
+    search() {
+      let { status_value, store_value, unit_select } = this;
+      this.handlePageChange({
+        status: status_value,
+        sid: store_value,
+        search: unit_select
+      });
+    },
+     cell_click(scope) {
+      this.Custome_info = scope.row;
+    },
+    resData(data = []) {
+      if(data.length != 0) {
+        data.forEach(item => item.status  = item.status == 0 ? "正常" : "作废")
+      }
+      this.tableData = data;
+    },
+    handlePageChange(data = {}) {
+      this.$refs.mytable.findList(
+        this.$api.yuming + "/StoreAdmin/Credit/getBeginningCreditList",
+        data
+      );
+    },
+    del(scoped) {
+      let id = scoped.row.id;
+      this.$api
+        .HttpPost("/StoreAdmin/Credit/invalidBeginningCredit", { id })
+        .then(v => {
+          if (v.data.code == 200) {
+            this.$message({
+              type: "success",
+              message: "操作成功"
+            });
+            this.handlePageChange();
+          } else {
+            this.$message.error(v.data.msg);
+          }
+        });
+    }
+  }
+};
+</script>
+
+<style scoped>
+.contation {
+  width: 90%;
+  margin: 10px auto;
+}
+.query-box {
+  width: 100%;
+  /* padding: 0 5%; */
+  box-shadow: 5px 5px 20px #dcdfe6;
+  padding-bottom: 13px;
+  display: flex;
+  margin: 10px auto;
+}
+</style>

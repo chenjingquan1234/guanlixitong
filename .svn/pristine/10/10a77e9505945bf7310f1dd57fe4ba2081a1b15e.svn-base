@@ -1,0 +1,463 @@
+<template>
+  <div id="ticheng">
+    <Dialog ref="dialog_fwfl" :title="title_fwfl" @enter="enter_fwfl" >
+      <template>
+        <el-input size="mini" v-model="dialog_name" clearable disabled><label slot="prepend">名称&#12288&#12288</label></el-input>
+        <el-divider content-position="left">销售提成</el-divider>
+        <el-radio-group size="mini" v-model="sale_fwfl" @change="sale_fwfl_change">
+          <el-radio-button label="按销售比例提成"></el-radio-button>
+          <el-radio-button label="提成金额"></el-radio-button>
+        </el-radio-group>
+        <el-input size="mini" v-model="sale_fwfl_name" clearable>
+          <label slot="prepend">提成金额</label>
+          <label slot="append">{{sale_fwfl_id === 1?'%':'元'}}</label>
+        </el-input>
+        <el-divider content-position="left">施工提成</el-divider>
+        <el-radio-group size="mini" v-model="construction_fwfl" @change="construction_fwfl_change">
+          <el-radio-button label="按施工比例提成"></el-radio-button>
+          <el-radio-button label="提成金额"></el-radio-button>
+        </el-radio-group>
+        <el-input size="mini" v-model="construction_fwfl_name" clearable>
+          <label slot="prepend">提成金额</label>
+          <label slot="append">{{construction_fwfl_id === 1?'%':'元'}}</label>
+        </el-input>
+      </template>
+    </Dialog>
+
+    <Dialog ref="dialog_tctc" :title="title_tctc" @enter="enter_tctc">
+      <template>
+        <el-input size="mini" v-model="dialog_name" clearable disabled><label slot="prepend">名称&#12288&#12288</label></el-input>
+        <el-divider content-position="left">销售提成</el-divider>
+        <el-radio-group size="mini" v-model="sale_tctc" @change="sale_tctc_change">
+          <el-radio-button label="按销售比例提成"></el-radio-button>
+          <el-radio-button label="提成金额"></el-radio-button>
+        </el-radio-group>
+        <el-input size="mini" v-model="sale_tctc_name" clearable>
+          <label slot="prepend">提成金额</label>
+          <label slot="append">{{sale_tctc_id === 1?'%':'元'}}</label>
+        </el-input>
+      </template>
+    </Dialog>
+
+    <Dialog ref="dialog_cztc" :title="title_cztc" @enter="enter_cztc" @close="close">
+      <template>
+        <el-divider content-position="left">充值范围</el-divider>
+        <el-input size="mini" v-model="start_cztc" clearable></el-input>
+        <el-input size="mini" v-model="end_cztc" clearable></el-input>
+        <el-divider content-position="left">销售提成</el-divider>
+        <el-radio-group size="mini" v-model="sale_cztc" @change="sale_cztc_change">
+          <el-radio-button label="按销售比例提成"></el-radio-button>
+          <el-radio-button label="提成金额"></el-radio-button>
+        </el-radio-group>
+        <el-input size="mini" v-model="sale_cztc_name" clearable>
+          <label slot="prepend">提成金额</label>
+          <label slot="append">{{sale_cztc_id === 1?'%':'元'}}</label>
+        </el-input>
+      </template>
+    </Dialog>
+
+    <el-button size="mini" :type="is === 1?'success':''" round @click="bt(1)">服务分类提成</el-button>
+    <el-button size="mini" :type="is === 2?'success':''" round @click="bt(2)">商品分类提成</el-button>
+    <el-button size="mini" :type="is === 3?'success':''" round @click="bt(3)">套餐提成</el-button>
+    <el-button size="mini" :type="is === 4?'success':''" round @click="bt(4)">充值提成</el-button>
+    <el-button size="mini" :type="is === 5?'success':''" round @click="bt(5)">总提成</el-button>
+    <div v-if="!(is === 5)">
+      <div style="margin: 1rem 0;" v-if="is === 1||is === 2?true:false">
+        <label>{{is === 1?'服务分类':'商品分类'}}</label>
+        <el-select size="mini" v-model="service_name" clearable placeholder="请选择分类" @change="service_change">
+          <el-option v-for="value in service_select" :key="value.id" :label="value.classify_name" :value="value.id"></el-option>
+        </el-select>
+      </div>
+      <div style="margin: 1rem 0;" v-if="is === 4">
+        <el-button size="mini" @click="add">新增提成</el-button>
+        <el-button size="mini" @click="del">删除</el-button>
+      </div>
+      <mytable :tableTitle="tableTitle" :tableData="tableData" :operation_mod="operation_mod" :operation_del="operation_del"
+      :operation_="operation_" :operation_name="operation_name" @cell_click="cell_click" @resData="resData" @handlePageChange="handlePageChange" @operat="operat" ref="mytable"></mytable>
+    </div>
+    <el-card v-else style="margin: 1rem auto; width: 40%;">
+      <div slot="header">
+        <label>总提成设置</label>
+        <el-button style="float: right;" size="mini" type="primary" @click="enter_ztc(5)">保存</el-button>
+      </div>
+      <el-radio-group size="mini" v-model="total_sstc" @change="total_sstc_change">
+        <el-radio-button label="按销售比例提成"></el-radio-button>
+        <el-radio-button label="提成金额"></el-radio-button>
+      </el-radio-group>
+      <el-input size="mini" v-model="total_sstc_name" clearable>
+        <label slot="prepend">销售提成</label>
+        <label slot="append">{{total_sstc_id === 1?'%':'元'}}</label>
+      </el-input>
+      <el-radio-group size="mini" v-model="total_sgtc" @change="total_sgtc_change">
+        <el-radio-button label="按施工比例提成"></el-radio-button>
+        <el-radio-button label="提成金额"></el-radio-button>
+      </el-radio-group>
+      <el-input size="mini" v-model="total_sgtc_name" clearable>
+        <label slot="prepend">施工提成</label>
+        <label slot="append">{{total_sgtc_id === 1?'%':'元'}}</label>
+      </el-input>
+      <el-divider content-position="left">提成方式</el-divider>
+        <el-radio v-model="totals_tcfs" :label="1">未设置分类提成则按照总提成计算</el-radio>
+        <el-radio v-model="totals_tcfs" :label="2">全部按照总提成计算</el-radio>
+        <el-radio v-model="totals_tcfs" :label="3">全部按照分类提成计算</el-radio>
+    </el-card>
+  </div>
+</template>
+
+<script>
+import mytable from "./../mytable.vue"
+import Dialog from "./../other/Dialog.vue"
+export default{
+	name: "ticheng",
+  components:{
+    mytable,
+    Dialog
+  },
+	data(){
+		return{
+      is: 1,
+      url: [
+        "/storeadmin/commission/getServiceItemCommissionList",
+        "/storeadmin/commission/getProductItemCommissionList",
+        "/storeadmin/commission/getPackageList",
+        "/storeadmin/commission/getRechargeList",
+        "/storeadmin/commission/setServiceItemCommission",//修改服务分类提成
+        "/storeadmin/commission/setProductItemCommission",//修改商品分类提成
+        "/storeadmin/commission/setPackageCommission",//修改套餐提成
+        "/storeadmin/commission/setRechargeCommission",//修改充值提成
+        "/storeadmin/commission/delRechargeCommission",//删除充值提成
+        "/storeadmin/commission/setCommission",//保存总结算
+        "/storeadmin/commission/getAllCommission"//总结算详情
+      ],
+      operation_mod: false,
+      operation_del: false,
+      operation_: true,
+      operation_name: "修改",
+      tableData: [{}],
+      service_name: "",
+      service_id: "",
+      service_select: [],
+      title_fwfl: "分类提成",
+      title_tctc: "套餐提成",
+      title_cztc: "充值提成",
+      //
+      dialog_name: "",
+      dialog_id: "",
+      sale_fwfl: "提成金额",
+      sale_fwfl_id: 2,
+      sale_fwfl_name: "",
+      construction_fwfl: "提成金额",
+      construction_fwfl_id: 2,
+      construction_fwfl_name: "",
+      //
+      sale_tctc: "提成金额",
+      sale_tctc_id: 2,
+      sale_tctc_name: "",
+      //
+      add_type: "",
+      cztc_del_id: [],
+      start_cztc: 0,
+      end_cztc: 0,
+      sale_cztc: "提成金额",
+      sale_cztc_id: 2,
+      sale_cztc_name: "",
+      //
+      total_sstc: "提成金额",
+      total_sstc_id: 1,
+      total_sstc_name: 100,
+      total_sgtc: "提成金额",
+      total_sgtc_id: 1,
+      total_sgtc_name: 100,
+      totals_tcfs: 1,
+		}
+	},
+  computed:{
+    tableTitle:{
+      get(){
+        if(this.is === 1){
+          return [
+            {key: "classify_name", title: "服务分类", min_width: "100"},
+            {key: "item_name", title: "服务项目", min_width: "100"},
+            {key: "sales_commission", title: "销售提成", min_width: "100"},
+            {key: "construction_commission", title: "施工提成", min_width: "100"}
+          ]
+        }
+        else if(this.is === 2){
+          return [
+            {key: "classify_name", title: "商品分类", min_width: "100"},
+            {key: "item_name", title: "商品名称", min_width: "100"},
+            {key: "sales_commission", title: "销售提成", min_width: "100"},
+            {key: "construction_commission", title: "施工提成", min_width: "100"}
+          ]
+        }
+        else if(this.is === 3){
+          return [
+            {key: "item_name", title: "套餐名称", min_width: "100"},
+            {key: "amount", title: "售价", min_width: "100"},
+            {key: "sales_commission", title: "销售提成", min_width: "100"}
+          ]
+        }
+        else if(this.is === 4){
+          return [
+            {key: "amount", title: "充值金额", min_width: "100"},
+            {key: "sales_commission", title: "销售提成", min_width: "100"}
+          ]
+        }
+      },
+      set(){return;}
+    }
+  },
+  methods: {
+    open() {
+      console.log(1111)
+    },
+    close() {
+      this.sale_cztc = "提成金额"
+    },
+    service_change(s){
+      this.service_id = s;
+      this.handlePageChange({classify_id: s});
+    },
+    add(){
+      this.add_type = 1;
+      this.dialog_id = "";
+      this.start_cztc = 0;
+      this.end_cztc = 0;
+      this.sale_cztc_id = 2;
+      this.sale_cztc_name = "";
+      this.$refs.dialog_cztc.init();
+    },
+    del(){
+      this.$api.HttpPost(this.url[8], {id: this.cztc_del_id})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    bt(s){
+      this.is = s;
+      if(this.is === 5){
+        this.$api.HttpPost(this.url[10], {})
+        .then((data)=>{
+          let s = data.data.data;
+          this.total_sstc_id = s.sales_type;
+          this.total_sstc_name = s.sales_commission;
+          this.total_sgtc_id = s.construction_type;
+          this.total_sgtc_name = s.construction_commission;
+          this.totals_tcfs = s.commission_type;
+          if(this.total_sstc_id == 1){
+            this.total_sstc = "按销售比例提成";
+          }
+          else{
+            this.total_sstc = "提成金额";
+          }
+          if(this.total_sgtc_id == 1){
+            this.total_sgtc = "按施工比例提成";
+          }
+          else{
+            this.total_sgtc = "提成金额";
+          }
+        })
+        return;
+      }
+      this.service_name = "";
+      this.service_id = "";
+      this.fenlei();
+      this.handlePageChange({classify_id: ""});
+    },
+    sale_fwfl_change(s){
+      console.log(s)
+      if(this.sale_fwfl === "按销售比例提成"){
+        this.sale_fwfl_id = 1;
+      }
+      else{
+        this.sale_fwfl_id = 2;
+      }
+    },
+    construction_fwfl_change(s){
+      if(s === "按施工比例提成"){
+        this.construction_fwfl_id = 1;
+      }
+      else{
+        this.construction_fwfl_id = 2;
+      }
+    },
+    enter_fwfl(){
+      let url = "";
+      if(this.is === 1){url = this.url[4]}
+      else{url = this.url[5]}
+      this.$api.HttpPost(url,
+      {item_id: this.dialog_id,
+      sales_type: this.sale_fwfl_id,
+      sales_commission: this.sale_fwfl_name,
+      construction_type: this.construction_fwfl_id,
+      construction_commission: this.construction_fwfl_name})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.$refs.dialog_fwfl.cancel();
+          this.handlePageChange({classify_id: this.service_id});
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    sale_tctc_change(s){
+      if(s === "按销售比例提成"){
+        this.sale_tctc_id = 1;
+      }
+      else{
+        this.sale_tctc_id = 2;
+      }
+    },
+    enter_tctc(){
+      this.$api.HttpPost(this.url[6],
+      {package_id: this.dialog_id,
+      sales_type: this.sale_tctc_id,
+      sales_commission: this.sale_tctc_name})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.$refs.dialog_tctc.cancel();
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    sale_cztc_change(s){
+      if(s === "按销售比例提成"){
+        this.sale_cztc_id = 1;
+      }
+      else{
+        this.sale_cztc_id = 2;
+      }
+    },
+    enter_cztc(){
+      this.$api.HttpPost(this.url[7],
+      {add_type: this.add_type,
+      id: this.dialog_id,
+      start_amount: this.start_cztc,
+      end_amount: this.end_cztc,
+      sales_type: this.sale_cztc_id,
+      sales_commission: this.sale_cztc_name})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.$refs.dialog_cztc.cancel();
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    total_sstc_change(s){
+      if(s === "按销售比例提成"){
+        this.total_sstc_id = 1;
+      }
+      else{
+        this.total_sstc_id = 2;
+      }
+    },
+    total_sgtc_change(s){
+      if(s === "按施工比例提成"){
+        this.total_sgtc_id = 1;
+      }
+      else{
+        this.total_sgtc_id = 2;
+      }
+    },
+    enter_ztc(){
+      this.$api.HttpPost(this.url[9],
+      {sales_commission: this.total_sstc_name,
+      sales_type: this.total_sstc_id,
+      construction_commission: this.total_sgtc_name,
+      construction_type: this.total_sgtc_id,
+      commission_type: this.totals_tcfs})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    operat(row){
+      this.dialog_id = row.row.id;
+      if(this.is === 1 || this.is === 2){
+        this.dialog_name = row.row.item_name;
+        // this.sale_fwfl_id = row.row.sales_type;
+        this.sale_fwfl_name = row.row.sales_commission;
+        this.sale_fwfl_name = this.sale_fwfl_name.substring(0,this.sale_fwfl_name.length - 1);
+        // this.construction_fwfl_id = row.row.construction_type;
+        this.construction_fwfl_name = row.row.construction_commission;
+        this.construction_fwfl_name = this.construction_fwfl_name.substring(0,this.construction_fwfl_name.length - 1);
+        this.$refs.dialog_fwfl.init();
+      }
+      else if(this.is === 3){
+        this.dialog_name = row.row.item_name;
+        // this.sale_tctc_id = row.row.sales_type;
+        this.sale_tctc_name = row.row.sales_commission;
+        this.sale_tctc_name = this.sale_tctc_name.substring(0,this.sale_tctc_name.length - 1);
+        this.$refs.dialog_tctc.init();
+      }
+      else if(this.is === 4){
+        this.dialog_name = ""
+        this.add_type = 2;
+        this.start_cztc = row.row.start_amount;
+        this.end_cztc = row.row.end_amount;
+        // this.sale_cztc_id = row.row.sales_type;
+        this.sale_cztc_name = row.row.sales_commission;
+        this.sale_cztc_name = this.sale_cztc_name.substring(0,this.sale_cztc_name.length - 1);
+        this.$refs.dialog_cztc.init();
+      }
+    },
+    cell_click(row){
+      this.cztc_del_id = [];
+      let num = this.$refs.mytable.$refs.xTable.getSelectRecords();
+      for(let i in num){
+        this.cztc_del_id.splice(0, 0, num[i].id);
+      }
+    },
+    resData(data){
+      this.tableData = data;
+    },
+    handlePageChange(data){
+      if(data === undefined){data = {}}
+      this.$refs.mytable.findList(this.$api.yuming + this.url[this.is - 1], data);
+    },
+    fenlei(){
+      if(this.is === 1){
+        this.$api.HttpPost("/storeadmin/commission/getServiceItemClassifySelect", {})
+        .then((data)=>{
+          this.service_select = data.data.data;
+        })
+      }
+      else{
+        this.$api.HttpPost("/storeadmin/commission/getProductItemClassifySelect", {})
+        .then((data)=>{
+          this.service_select = data.data.data;
+        })
+      }
+    }
+  },
+  mounted(){
+    this.bt(this.is);
+  }
+}
+</script>
+
+<style scoped>
+#ticheng{
+  margin: 1rem 5rem;
+}
+</style>

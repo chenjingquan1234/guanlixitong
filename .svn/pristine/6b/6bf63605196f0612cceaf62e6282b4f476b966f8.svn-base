@@ -1,0 +1,114 @@
+<template>
+  <div id="two">
+    <div class="pb-nav">
+      <el-button size="mini" type="primary" icon="el-icon-money" @click="settlement()">结算</el-button>
+      <el-button size="mini" type="danger" icon="el-icon-delete" @click="del()">删除</el-button>
+      <el-button size="mini" type="info" icon="el-icon-download" @click="download()">导出</el-button>
+      <el-input size="mini" v-model="key_name" style="width: 25rem;" placeholder="可按车牌号码,客户姓名,手机号码进行搜索" clearable><label slot="prepend">关键字</label></el-input>
+      <el-date-picker size="mini" v-model="start_time" type="datetime" placeholder="Start_Time" :picker-options="pickerOptions"></el-date-picker>
+      <el-date-picker size="mini" v-model="end_time" type="datetime" placeholder="End_Time" :picker-options="pickerOptions"></el-date-picker>
+      <el-select size="mini" v-model="store_name" filterable clearable placeholder="门店" @change="store_change">
+        <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+      </el-select>
+      <el-button size="mini" type="primary" @click="search()">查询</el-button>
+    </div>
+    <mytable :tableTitle="tableTitle" :tableData="tableData" :operation="operation" :check_box="check_box" @resData="resData" @handlePageChange="handlePageChange" @cell_click="cell_click" ref="mytable"></mytable>
+  </div>
+</template>
+
+<script>
+import mytable from "./../../mytable.vue"
+export default{
+  name: "two",
+  components:{
+    mytable
+  },
+  data(){
+    return{
+      pickerOptions: {
+        // disabledDate(time){return time.getTime() > Date.now();},
+        shortcuts: [{text: '今天',onClick(picker) {picker.$emit('pick', new Date());}},
+        {text: '昨天',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24);picker.$emit('pick', date);}},
+        {text: '一周前',onClick(picker){const date = new Date();date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);picker.$emit('pick', date);}}]
+      },
+      //配置
+      tableTitle: [
+        {key: "order_sn", title: "订单编号", min_width: "200"},
+        {key: "tel", title: "手机号", min_width: "200"},
+        {key: "p_chexingmingcheng", title: "车型", min_width: "200"},
+        {key: "license_plate_number", title: "车牌号码", min_width: "100"},
+        {key: "name", title: "客户名称", min_width: "100"},
+        {key: "leave_factory_time", title: "预计完工", min_width: "100"},
+        {key: "total_amount", title: "合计金额", min_width: "100"},
+        // {key: "total_cost", title: "成本", min_width: "100"},
+        {key: "service_consultant", title: "服务顾问", min_width: "100"},
+        {key: "create_time", title: "创建时间", min_width: "200"},
+        {key: "remark", title: "备注", min_width: "100"},
+      ],
+      tableData: [],
+      operation: false,
+      check_box: false,
+      //数据
+      key_name: "",
+      start_time: "",
+      end_time: "",
+      store_name: "",
+      store_id: "",
+      cell: {}
+    }
+  },
+  props:{
+    "store_select": {
+      type: Array,
+      default: ()=>{}
+    }
+  },
+  methods:{
+    search: function(){
+      this.handlePageChange({search: this.key_name, start_time: this.start_time, end_time: this.end_time, sid: this.store_id});
+    },
+    settlement: function(){
+      if(this.cell === ""){return this.$message.warning("请选择工单")}
+      this.$emit("settlement", "one", this.cell);
+    },
+    del: function(){
+      if(this.cell === ""){return this.$message.warning("请选择工单")}
+      this.$api.HttpPost("/StoreAdmin/Order/delOrder", {id: this.cell.row.id})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+    },
+    download: function(){
+      this.$refs.mytable.$refs.xTable.exportData({type: "csv"});
+    },
+    store_change: function(s){
+      this.store_id = s;
+    },
+    cell_click: function(row, column){
+      this.cell = row;
+    },
+    resData: function(data){
+      this.tableData = data;
+    },
+    handlePageChange: function(data){
+      if(data === undefined){data = {}}
+      this.$refs.mytable.findList(this.$store.state.domainName_http+"/storeadmin/Order/getOutstandingOrderList", data);
+    }
+  },
+  mounted(){
+
+  }
+}
+</script>
+
+<style scoped>
+#two{
+  margin: 1rem 5rem;
+}
+</style>

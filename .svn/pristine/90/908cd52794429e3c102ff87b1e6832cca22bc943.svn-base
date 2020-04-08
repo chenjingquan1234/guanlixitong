@@ -1,0 +1,592 @@
+<template>
+  <div id="one">
+    <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+      <el-tab-pane label="会员卡种" name="one">
+        <div class="pb-nav">
+          <el-button size="mini" style="margin-right: 10px;" type="primary" icon="el-icon-plus" @click="modify(null, 1)">添加</el-button>
+          <el-input size="mini" style="width: 20rem" v-model="card_name"><template slot="prepend">卡名称</template></el-input>
+          <el-input size="mini" style="width: 20rem" v-model="remark"><template slot="prepend">备注</template></el-input>
+          <el-select size="mini"  v-model="card_state" placeholder="卡状态" @change="change_state" clearable>
+            <el-option :value="1" label="正常"></el-option>
+            <el-option :value="0" label="停用"></el-option>
+          </el-select>
+          <el-select size="mini"  v-model="store_name" placeholder="所属门店" @change="change_store" clearable>
+            <el-option v-for="value in store" :key="value.sid" :value="value.sid" :label="value.store_name"></el-option>
+          </el-select>
+          <el-button size="mini" type="primary" @click="search()">查询</el-button>
+        </div>
+        <!-- 弹出框 -->
+        <el-dialog title="添加卡种" :visible.sync="dialog" :close-on-click-modal="false" width="40%">
+          <el-input size="mini" v-model="d_card_name"><template slot="prepend"><label style="color: red;">卡名称&#12288&#12288&#12288&#12288</label></template></el-input>
+          <el-input size="mini" v-model="d_recharge"><template slot="prepend">开卡充值&#12288&#12288&#12288</template></el-input>
+          <el-input size="mini" v-model="d_giving"><template slot="prepend">开卡赠送&#12288&#12288&#12288</template></el-input>
+          <el-input size="mini" v-model="d_validity"><template>
+            <label slot="prepend" style="color: red;">有效期&#12288&#12288&#12288&#12288</label>
+            <el-select slot="append" v-model="d_validity_type" style="width: 5rem;" @change="change_date">
+              <el-option value="1" label="年"></el-option><el-option value="2" label="月"></el-option><el-option value="3" label="日"></el-option>
+            </el-select>
+          </template></el-input>
+          <!-- <el-input size="mini" :disabled="true"><template><label slot="prepend">开通短信服务&#12288</label><el-switch v-model="" slot="append"></el-switch></template></el-input> -->
+          <!-- <el-input size="mini" :disabled="true"><template><label slot="prepend">是否共享到分店</label><el-switch v-model="d_is_share" slot="append"></el-switch></template></el-input> -->
+          <!-- <el-input size="mini" v-model=""><template><label slot="prepend">短信服务扣费&#12288</label><label slot="append">(单位：月)</label></template></el-input> -->
+          <el-input size="mini" v-model="d_image"><template><label slot="prepend">图片上传&#12288&#12288&#12288</label><el-button slot="append">上传</el-button></template></el-input>
+          <el-input size="mini" v-model="d_remark" type="textarea" placeholder="备注"></el-input>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialog=false">取 消</el-button>
+            <el-button type="primary" @click="confirm()">确 定</el-button>
+          </div>
+        </el-dialog>
+        <!-- 表格 -->
+        <mytable :tableTitle="tableTitle" :tableData="tableData" :operation_="operation_" :operation_name="operation_name" :operation_del_name="operation_del_name"
+        @handlePageChange="init" @resData="resDataOne" @modify="modify" @del="del" @operat="operat" ref="tableone"></mytable>
+      </el-tab-pane>
+
+      <el-tab-pane label="计次套餐" name="two">
+        <div class="pb-nav">
+          <el-button size="mini" style="margin-right: 10px;" type="primary" icon="el-icon-plus" @click="modify1(null, 1)">添加</el-button>
+          <el-input size="mini" style="width: 20rem" v-model="package_name"><template slot="prepend">套餐名称</template></el-input>
+          <el-input size="mini" style="width: 20rem" v-model="remark1"><template slot="prepend">备注</template></el-input>
+          <el-select size="mini" v-model="card1_state" placeholder="卡状态" @change="change1_state" clearable>
+            <el-option :value="1" label="正常"></el-option>
+            <el-option :value="0" label="停用"></el-option>
+          </el-select>
+          <el-select size="mini" v-model="store1_name" placeholder="所属门店" @change="change1_store" clearable>
+            <el-option v-for="(value, key) in store1" :key="value.sid" :value="value.sid" :label="value.store_name"></el-option>
+          </el-select>
+          <el-button size="mini" type="primary" @click="search1()">查询</el-button>
+        </div>
+        <!-- 弹出框 -->
+        <el-dialog title="添加计次卡" :visible.sync="dialog1" :close-on-click-modal="false" width="40%">
+          <el-input size="mini" v-model="d1_package_name"><template slot="prepend"><label style="color: red;">计次卡名称&#12288&#12288</label></template></el-input>
+          <el-input size="mini" v-model="d1_price"><template slot="prepend">总金额&#12288&#12288&#12288&#12288</template></el-input>
+          <el-input size="mini" v-model="d1_times" :disabled="true"><template slot="prepend">总次数&#12288&#12288&#12288&#12288</template></el-input>
+          <el-input size="mini" v-model="d1_cost"><template slot="prepend">成本&#12288&#12288&#12288&#12288&#12288</template></el-input>
+          <el-input size="mini" v-model="d1_validity"><template>
+            <label slot="prepend" style="color: red;">有效期&#12288&#12288&#12288&#12288</label>
+            <el-select slot="append" v-model="d1_validity_type" style="width: 5rem;" @change="change1_date">
+              <el-option value="1" label="年"></el-option><el-option value="2" label="月"></el-option><el-option value="3" label="日"></el-option>
+            </el-select>
+          </template></el-input>
+          <!-- <el-input size="mini" :disabled="true"><template><label slot="prepend">是否共享到分店</label><el-switch v-model="d1_is_share" slot="append"></el-switch></template></el-input> -->
+          <el-input size="mini" :disabled="true"><template><label slot="prepend">计次方式&#12288&#12288&#12288</label><el-radio slot="append" v-model="d1_one" :label="1">单次计次</el-radio></template></el-input>
+          <el-input size="mini" v-model="d1_remark" type="textarea" placeholder="备注"></el-input>
+          
+
+          <el-popover
+          @show="showPopover"
+            class="mytable"
+            placement="right"
+            :height="400"
+            trigger="click">
+             <mytable 
+              :height="400"
+              :check_box="false"
+              :operation_mod="false"
+              :operation_del="false"
+              :tableTitle="tableTitl2"  
+              :tableData="select_tableData"  
+              @handlePageChange="handlePageChangeProduct" 
+              @resData="resDataProduct"
+              @cell_click="cell_click"
+                ref="mytable"></mytable>
+            <el-input size="mini" v-model="search_value" @input="searchStore" slot="reference" placeholder="请输入关键字" style="margin-top:10px">
+            <template slot="prepend">计次项目搜索</template>
+              <el-button slot="append" style="background:#409EFF;color:#fff" size="mini" type="primary">添加计次项目</el-button>
+          </el-input>
+            
+          </el-popover>
+          <!-- 弹出框内嵌表格 -->
+         <vxe-table size="mini" border highlight-hover-row highlight-current-row show-footer max-height="400" :loading="dialog1_loading" :data="itemList"
+          :edit-config="{trigger: 'click', mode: 'cell', showStatus: true}" @edit-closed="edit_closed">
+            <vxe-table-column field="service_item_name"  title="套餐项目"></vxe-table-column>
+            <!-- <vxe-table-column type="expand" width="50">
+              <template v-slot="{row, rowIndex}">
+                <vxe-table highlight-hover-row show-footer :data="select_tableData" @cell-click="select_c_table">
+                  <vxe-table-column field="service_item_name" title="商品名称" sortable></vxe-table-column>
+                  <vxe-table-column field="specification" title="规格"></vxe-table-column>
+                  <vxe-table-column field="price" title="售价"></vxe-table-column>
+                  <vxe-table-column field="cost" title="成本"></vxe-table-column>
+                  <vxe-table-column field="number" title="条形码"></vxe-table-column>
+                </vxe-table>
+                <vxe-pager
+                  :loading="select_loading"
+                  :current-page="tablePage.currentPage"
+                  :page-size="tablePage.pageSize"
+                  :total="tablePage.totalResult"
+                  :layouts="['PrevPage', 'JumpNumber', 'NextPage', 'FullJump', 'Sizes', 'Total']"
+                  @page-change="handlePageChange">
+                </vxe-pager>
+              </template>
+            </vxe-table-column> -->
+            <vxe-table-column field="times" title="数量" width="100" :edit-render="{name: 'input'}"></vxe-table-column>
+            <vxe-table-column field="price" title="单价" width="100"></vxe-table-column>
+            <vxe-table-column field="total" title="总价" width="100"></vxe-table-column>
+            <vxe-table-column title="操作" width="100">
+              <template slot-scope="scope">
+                <el-button style="color: red;" size="mini" type="text" @click="dialog1_del(scope)">删除</el-button>
+              </template>
+            </vxe-table-column>
+          </vxe-table>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialog1 = false">取 消</el-button>
+            <el-button type="primary" @click="confirm1()">确 定</el-button>
+          </div>
+        </el-dialog>
+        <!-- 表格 -->
+        <mytable :tableTitle="tableTitle1" :tableData="tableData1" :operation_="operation_" :operation_name="operation_name" :operation_del="operation_del"
+        @handlePageChange="init" @resData="resDataTwo" @modify="modify1" @operat="operat1" ref="tabletwo"></mytable>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>
+
+<script>
+import mytable from './../../mytable.vue'
+export default{
+  name: "one",
+  components:{
+    mytable
+  },
+  data(){
+    return{
+      changeValue: false,
+      search_value:"",
+      activeName: "one",
+      tableData: [],
+      tableTitle: [
+        {key: "card_name", title: "卡名称", min_width: "100"},
+        {key: "recharge", title: "开卡充值", min_width: "100"},
+        {key: "giving", title: "开卡赠送", min_width: "100"},
+        {key: "validity_date", title: "有效期", min_width: "100"},
+        {key: "image", title: "会员卡图片", min_width: "100"},
+        {key: "status", title: "卡状态", min_width: "100"},
+        {key: "remark", title: "备注", min_width: "100"},
+      ],
+      tableTitl2: [
+        {key: "service_item_name", title: "商品名称", min_width: "100"},
+        {key: "specification", title: "规格", min_width: "100"},
+        {key: "price", title: "售价", min_width: "100"},
+        {key: "cost", title: "成本", min_width: "100"},
+        {key: "number", title: "条形码", min_width: "100"},
+      ],
+      tableData1: [],
+      tableTitle1: [
+        {key: "package_name", title: "套餐名称", min_width: "100"},
+        {key: "price", title: "套餐售价", min_width: "100"},
+        {key: "times", title: "套餐次数", min_width: "100"},
+        {key: "validity_date", title: "有效期", min_width: "100"},
+        {key: "status", title: "状态", min_width: "100"},
+        {key: "remark", title: "备注", min_width: "100"},
+      ],
+      //表格一
+      card_state: "",//选中状态（搜索）
+      store_name: "",//选中门店（搜索）
+      state_id: "",//选中状态id（搜索）
+      store_id: "",//选中门店id（搜索）
+      store: [],//门店列表（搜索）
+      card_name: " ",
+      remark:" ",
+      dialog: false,
+      d_add_type: "",
+      d_id: "",
+      d_card_name: "",
+      d_recharge: "",
+      d_giving: "",
+      d_validity: "",
+      d_validity_type: "",
+      d_is_share: false,
+      d_image: "",
+      d_remark: "",
+      //表格二
+      card1_state: "",//选中状态（搜索）
+      store1_name: "",//选中门店（搜索）
+      state1_id: "",//选中状态id（搜索）
+      store1_id: "",//选中门店id（搜索）
+      store1: [],//门店列表（搜索）
+      package_name: " ",
+      remark1:" ",
+      dialog1: false,
+      d1_add_type: "",
+      d1_id: "",
+      d1_package_name: "",
+      d1_price: 0,
+      d1_cost: 0,
+      d1_times: 0,
+      d1_validity: "",
+      d1_validity_type: "",
+      d1_is_share: false,
+      d1_one: 1,
+      d1_image: "",
+      d1_remark: "",
+      itemList: [],
+      //其他配置
+      operation_: true,
+      operation_name: "停用|启用",
+      operation_del_name: "微信默认",
+      operation_del: false,
+      dialog1_loading: false,
+      select_tableData: [],
+      tablePage: {
+        currentPage: 1,//当前页
+        pageSize: 10,//当前页数据
+        totalResult: 0//总数据
+      },
+      select_loading: false
+    }
+  },
+  methods:{
+    showPopover() {
+    //   setTimeout(() => {
+    //   this.changeValue = !this.changeValue
+    //   this.$nextTick(() => {
+    //     })
+    // }, 0)
+       this.handlePageChangeProduct()
+    },
+    handleClick(val) {
+      switch (val.name) {
+        case "one":
+          this.init()
+          break;
+        case "two": 
+        this.init()
+          break
+      }
+    },
+    searchStore() {
+    this.handlePageChangeProduct({search:this.search_value})
+    },
+    resDataProduct(data) {
+      this.select_tableData = data;
+    },
+    handlePageChangeProduct(data ={}) {
+     this.$refs.mytable.findList(
+        this.$api.yuming + "/StoreAdmin/Customer/getServiceItemSelect",
+        data
+      );
+    },
+    cell_click(scope) {
+       let id = scope.row.id;
+      this.itemList.findIndex(item => item.id == id) != -1
+        ? this.$message.error("不能重复选择商品")
+        : this.itemList.push(scope.row);
+    },
+    //初始化
+    init: function() {
+      this.$api.HttpPost("/StoreAdmin/Common/getStoreSelect", {})
+      .then((data)=>{
+        this.store = data.data;
+        this.store1 = data.data;
+        this.$refs.tableone.findList(this.$api.yuming + "/storeadmin/Customer/getMemberCardList", {});
+        this.$refs.tabletwo.findList(this.$api.yuming + "/storeadmin/Customer/getPackageList", {});
+      })
+    },
+    resDataOne: function(data) {
+      for(var key in data){
+        data[key].status = data[key].status===0?"停用":"正常";
+      }
+      this.tableData = data;
+    },
+    resDataTwo: function(data){
+      for(var key in data){
+        data[key].status = data[key].status===0?"停用":"正常";
+      }
+      this.tableData1 = data;
+    },
+    //功能
+    search: function(){
+      var search = {sid: this.store_id, card_name: this.card_name, status: this.card_state, remark: this.remark};
+      this.$refs.tableone.findList(this.$api.yuming + "/storeadmin/Customer/getMemberCardList", search);
+    },
+    search1: function(){
+      var search = {sid: this.store1_id, package_name: this.package_name, status: this.card1_state, remark: this.remark1};
+      this.$refs.tabletwo.findList(this.$api.yuming + "/storeadmin/Customer/getPackageList", search);
+    },
+    modify: function(value, key){
+      this.dialog = true;
+      this.d_add_type = key;
+      if(value === null){
+        this.d_id = "";
+        this.d_card_name = "";
+        this.d_recharge = "";
+        this.d_giving = "";
+        this.d_validity = "";
+        this.d_validity_type = "";
+        this.d_is_share = false;
+        this.d_image = "";
+        this.d_remark = "";
+      }
+      else{
+        var v = value.row;
+        this.d_id = v.id;
+        this.d_card_name = v.card_name;
+        this.d_recharge = v.recharge;
+        this.d_giving = v.giving;
+        this.d_validity = v.validity;
+        var validity_type = v.validity_date.split("");
+        validity_type = validity_type[validity_type.length-1]
+        this.d_validity_type = validity_type;
+        this.d_is_share = v.is_share;
+        this.d_image = v.image;
+        this.d_remark = v.remark;
+      }
+    },
+    del(row){
+      if(row.row.is_default != 0){
+        return;
+      }
+      else{
+        this.$api.HttpPost("/storeadmin/Customer/setMemberCardDefault", {id: row.row.id})
+        .then((data)=>{
+          if(data.data.code === 200){
+            this.$message.success(data.data.msg);
+          }
+          else{
+            this.$message.error(data.data.msg);
+          }
+        })
+      }
+    },
+    confirm: function(){
+      if(this.d_validity_type === "年"){
+        this.d_validity_type = 1;
+      }
+      else if(this.d_validity_type === "月"){
+        this.d_validity_type = 2;
+      }
+      else if(this.d_validity_type === "日"){
+        this.d_validity_type = 3;
+      }
+      this.$api.HttpPost("/storeadmin/Customer/memberCardEdit",
+      {add_type: this.d_add_type,
+      id: this.d_id,
+      card_name: this.d_card_name,
+      recharge: this.d_recharge,
+      giving: this.d_giving,
+      validity: this.d_validity,
+      validity_type: this.d_validity_type,
+      is_share: this.d_is_share,
+      image: this.d_image,
+      remark: this.d_remark})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      this.init();
+      this.dialog = false;
+    },
+    operat: function(value){
+      let test = value.row.status !== '停用' ? '是否停用该套餐?' : '是否启动该套餐?'
+      this.$confirm(test, {confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'})
+      .then((data)=>{
+        if(value.row.status === "正常"){
+          var status = 0;
+        }
+        else{
+          var status = 1;
+        }
+        this.$api.HttpPost("/storeadmin/Customer/updateMemberCardStatus",
+        {id: value.row.id,
+        status: status})
+        .then((data)=>{
+          let testMsg = value.row.status !== '停用' ? '停用套餐成功' : '启动套餐成功'
+          this.init();
+          this.$message.success(testMsg);
+        })
+      })
+    },
+    modify1: function(value, key){
+      this.dialog1 = true;
+      this.d1_add_type = key;
+      if(value === null){
+        this.d1_id = "";
+        this.d1_package_name = "";
+        this.d1_price = 0;
+        this.d1_cost = 0;
+        this.d1_times = 0;
+        this.d1_validity = "";
+        this.d1_validity_type = "";
+        this.d1_is_share = false;
+        this.d1_remark = "";
+        this.itemList = [];
+      }
+      else{
+        this.$api.HttpPost("/storeadmin/Customer/getPackageDetail", {id: value.row.id})
+        .then((data)=>{
+          var post = data.data.data;
+          var v = value.row;
+          this.d1_id = v.id;
+          this.d1_package_name = v.package_name;
+          this.d1_price = v.price;
+          this.d1_cost = post.packageDetail.cost;
+          this.d1_times = v.times;
+          this.d1_validity = v.validity;
+          var validity_type = v.validity_date.split("");
+          validity_type = validity_type[validity_type.length-1]
+          this.d1_validity_type = validity_type;
+          this.d1_is_share = v.is_share;
+          this.d1_remark = v.remark;
+          this.itemList = post.itemList;
+          this.math();
+        })
+        .catch((data)=>{})
+      }
+    },
+    confirm1: function(){
+      if(this.d1_validity_type === "年"){
+        this.d1_validity_type = 1;
+      }
+      else if(this.d1_validity_type === "月"){
+        this.d1_validity_type = 2;
+      }
+      else if(this.d1_validity_type === "日"){
+        this.d1_validity_type = 3;
+      }
+      for(let i=1;i<this.itemList.length;i++) {
+        if(!this.itemList[i].times) {
+          this.$message.error("请填写计次卡数量")
+          return
+        }
+      }
+      // this.itemList.splice(0, 1);
+      this.$api.HttpPost("/StoreAdmin/Customer/packageEdit",
+      {add_type: this.d1_add_type,
+      id: this.d1_id,
+      package_name: this.d1_package_name,
+      price: this.d1_price,
+      cost: this.d1_cost,
+      times: this.d1_times,
+      validity: this.d1_validity,
+      validity_type: this.d1_validity_type,
+      is_share: this.d1_is_share,
+      remark: this.d1_remark,
+      itemList: this.itemList})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.init();
+          this.dialog1 = false;
+          this.$message.success(data.data.msg);
+        }
+        else{
+            // this.itemList.splice(0, 0, {service_item_name: "默认列表", price: 0, times: 0, cost: 0});
+            this.$message.error(data.data.msg);
+        }
+      })
+    },
+    operat1: function(value){
+      let test = value.row.status !== '停用' ? '是否停用该套餐?' : '是否启动该套餐?'
+      this.$confirm(test, {confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'})
+      .then(()=>{
+        if(value.row.status === "正常"){
+          var status = 0;
+        }
+        else{
+          var status = 1;
+        }
+        this.$api.HttpPost("/StoreAdmin/Customer/updateMemberCardPackageStatus",
+        {id: value.row.id,
+        status: status})
+        .then((data)=>{
+          let testMsg = value.row.status !== '停用' ? '停用套餐成功' : '启动套餐成功'
+          this.init();
+          this.$message.success(testMsg);
+        })
+      })
+      .catch(()=>{})
+    },
+    //杂项功能
+    math: function(){
+      this.d1_price = 0;
+      this.d1_times = 0;
+      this.d1_cost = 0;
+      for(var i in this.itemList){
+        var total = this.itemList[i].times * this.itemList[i].price;
+        this.itemList[i].total = total;
+        this.d1_price += Number(this.itemList[i].total);
+        this.d1_times += Number(this.itemList[i].times);
+        this.d1_cost += Number(this.itemList[i].cost);
+      }
+    },
+    edit_closed: function(row, column){
+      this.math();
+    },
+    select_c_table: function(row, column){
+      this.itemList.push(row.row);
+      var tag = {};
+      this.itemList = this.itemList.reduce(function(item, next){
+        tag[next.service_item_name] ? "" : tag[next.service_item_name] = true && item.push(next);//&&运算符,若前面不为true则会跳过后面运算
+        return item;
+      }, []);
+    },
+    dialog1_modify: function(){
+      this.$message("此功能已废弃，请点击下拉选择新增！")
+    },
+    dialog1_del: function(scope){
+      // if(scope.row.service_item_name !== "默认列表"){
+        this.itemList.splice(scope.rowIndex, 1);
+      // }
+      // else{
+        // this.$message("默认列表不可删除");
+      // }
+    },
+    //内层分页
+    findList: function(){
+      this.select_loading = true;
+      this.$api.HttpPost("/StoreAdmin/Customer/getServiceItemSelect",
+      {page: this.tablePage.currentPage, quantity: 20})
+      .then((data)=>{
+        this.select_tableData = data.data.data.data;
+        this.tablePage.totalResult = data.data.data.total;
+        this.select_loading = false;
+      })
+      .catch((data)=>{
+        this.select_loading = false;
+      })
+    },
+    // handlePageChange: function({currentPage, pageSize}){
+    //   this.select_tableData = [];
+    //   this.tablePage.currentPage = currentPage;
+    //   this.tablePage.pageSize = pageSize;
+    //   this.findList();
+    // },
+
+    change_store: function(s){
+      this.store_id = s;
+    },
+    change_state: function(s){
+      this.state_id = s;
+    },
+    change_date: function(s){
+      this.d_validity_type = s;
+    },
+    change1_store: function(s){
+      this.store1_id = s;
+    },
+    change1_state: function(s){
+      this.state1_id = s;
+    },
+    change1_date: function(s){
+      this.d_validity_type = s;
+    }
+  },
+  created(){
+    this.init();
+  },
+  mounted(){
+    
+  }
+}
+</script>
+
+<style scoped>
+.el-tab-pane{
+  margin: 1rem 5rem;
+}
+.el-input-group__append{
+  background: blue;
+}
+</style>

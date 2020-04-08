@@ -1,0 +1,552 @@
+<template>
+  <div id="home">
+    <el-row :gutter="20">
+      <el-col :span="3" :offset="2" class="left-nav">
+        <el-card shadow="hover" style="margin-bottom:25px">
+          <div
+            slot="header"
+            style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;"
+          >
+            <h4>公告</h4>
+            <el-button
+              size="mini"
+              type="primary"
+              icon="el-icon-position"
+              circle
+              @click="DataAnalysis()"
+            ></el-button>
+          </div>
+          <el-collapse @change="data_analysis_change">
+            <el-collapse-item
+              v-for="value in data_analysis"
+              :key="value.key"
+              :title="value.title"
+              :name="value.key"
+            >
+              <label style="color: #c0c0c0;">{{value.content}}</label>
+              <label style="float: right; color: #ff9966;">{{value.num}}</label>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+        <!-- <br /> -->
+        <el-card shadow="hover" style="margin-bottom:25px">
+          <div
+            slot="header"
+            style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;"
+          >
+            <h4>软件帮助</h4>
+            <el-button
+              size="mini"
+              type="success"
+              icon="el-icon-position"
+              circle
+              @click="FeedBack()"
+            ></el-button>
+          </div>
+          <el-collapse @change="feedback_change">
+            <el-collapse-item
+              v-for="value in feedback"
+              :key="value.key"
+              :title="value.title"
+              :name="value.key"
+            >
+              <label style="color: #c0c0c0;">{{value.content}}</label>
+              <label style="float: right; color: #ff9966;">{{value.num}}</label>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+        <!-- <br /> -->
+        <el-card shadow="hover" style="margin-bottom:25px">
+          <div
+            slot="header"
+            style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;"
+          >
+            <h4>意见反馈</h4>
+            <el-button size="mini" type="danger" icon="el-icon-edit" circle @click="SoftwareHelp()"></el-button>
+          </div>
+          <el-collapse @change="software_help_change">
+            <el-collapse-item
+              v-for="value in software_help"
+              :key="value.key"
+              :title="value.title"
+              :name="value.key"
+            >
+              <label style="color: #c0c0c0;">{{value.content}}</label>
+              <label style="float: right; color: #ff9966;">{{value.num}}</label>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+        <!-- <br /> -->
+      </el-col>
+      <el-col :span="16" v-show="!help">
+        <el-row :gutter="5" style="margin:10px 0;">
+          <el-col :span="6" v-for="(item, index) in notices" :key="index">
+            <div class="Announcement" :style="'background-color:' + item.color"  @click="goToRouter(item.path, item.path_name)">
+              <div class="Announcement-left">
+                <span>{{item.name}}</span>
+                <span style="font-size:30px;font-weight:600;margin-top:15px">{{item.number}}</span>
+              </div>
+              <i class="iconfont" :class="item.icon" style="font-size:60px"></i>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="10" style="margin-top:20px">
+          <el-col :span="17">
+            <div style="margin-bottom:10px">
+              <div id="lostCustomer" class="echarts-wrap"></div>
+            </div>
+            <div>
+              <div id="secondCustomer" class="echarts-wrap"></div>
+            </div>
+          </el-col>
+          <el-col :span="6" :offset="1">
+            <div class="right-part" style>
+              <div class="right-part-title">今日营业数据</div>
+              <div v-for="(item, index) in progressArr" :key="index" style="margin-bottom:10px">
+                <div class="right-part-item">
+                  <span>{{item.name}}</span>
+                  <span style="font-weight:600;color:#666">{{item.value}}</span>
+                </div>
+                <el-progress
+                  :show-text="false"
+                  :text-inside="true"
+                  :color="item.color"
+                  :stroke-width="20"
+                  :percentage="item.value"
+                ></el-progress>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </el-col>
+      <el-col :span="16" v-show="help">
+        <help></help>
+      </el-col>
+      <el-drawer direction="btt" :visible.sync="drawer" :with-header="false">
+        <div style="margin: 0 20%;">
+          <label>意见&反馈</label>
+          <el-input type="textarea" v-model="opinion"></el-input>
+          <el-button size="small" type="primary" style="float: right; margin: 1rem 0;">提交</el-button>
+        </div>
+      </el-drawer>
+    </el-row>
+  </div>
+</template>
+
+<script>
+import { mapState } from 'vuex'
+import help from "./help.vue";
+export default {
+  name: "home",
+  components: {
+    help
+  },
+  data() {
+    return {
+      // 进度条数据
+      progressArr: [
+        { name: "会员到店台次", color: "#33ACF8", value: 47 },
+        { name: "散客到店台次", color: "#33ACF8", value: 35 },
+        { name: "新客到店台次", color: "#3DB9DC", value: 87 },
+        { name: "老客到店台次", color: "#3DB9DC", value: 23 },
+        { name: "会员消费金额", color: "#F2BF59", value: 37 },
+        { name: "散客消费金额", color: "#F2BF59", value: 46 },
+        { name: "老客消费金额", color: "#FF7563", value: 78 },
+        { name: "新客消费金额", color: "#FF7563", value: 90 }
+      ],
+      // 柱状图配置
+      barOption: {
+        backgroundColor: "#fff", //背景色
+        title: {
+          text: "营业收入",
+          x: "left",
+          y: "top",
+          textAlign: "left",
+          textStyle: {
+            color: "#666",
+            lett: "center"
+          }
+        },
+        tooltip: {
+          show: true, // 是否显示提示框，默认为true
+          trigger: "item", // 数据项图形触发
+          axisPointer: {
+            // 指示样式
+            type: "shadow",
+            axis: "auto"
+          },
+           formatter: "{a}<br/>{b} : {c}元",
+          padding: 5,
+          textStyle: {
+            // 提示框内容的样式
+            color: "#fff"
+          }
+        },
+        xAxis: {
+          data: [
+            "新增客户",
+            "新增客户",
+            "新增客户",
+            "新增客户",
+            "新增客户",
+            "新增客户",
+            "新增客户",
+            "新增客户"
+          ],
+          axisLabel: {
+            textStyle: {
+              color: "#CBCBCB" //坐标值得具体的颜色
+            }
+          }
+        },
+        legend: {
+          data: ["收入"]
+        },
+        yAxis: {
+          //  max : 200,
+          min: 0,
+          splitNumber: 5,
+          axisLabel: {
+            textStyle: {
+              color: "#CBCBCB" //坐标值得具体的颜色
+            }
+          }
+        },
+        series: [
+          {
+            name: "营业收入",
+            type: "bar",
+            barGap: "80%" /*多个并排柱子设置柱子之间的间距*/,
+            barCategoryGap: "50%" /*多个并排柱子设置柱子之间的间距*/,
+            data: [40, 30, 20, 50, 40, 30, 20, 50],
+            barWidth: 50 //柱图宽度
+          }
+        ],
+        color: ["#3EB9DC"]
+      },
+      // 线图配置
+      option: {
+        title: {
+          text: "入账金额",
+          left: "0%",
+          top: 0,
+          textStyle: {
+            color: "#666",
+            fontSize: 20,
+            bottom: 20
+          }
+        },
+        grid: {
+          left: 40,
+          right: 40,
+          top: 30,
+          bottom: 25
+        },
+        backgroundColor: "#fff", // 背景颜色
+        tooltip: {
+          trigger: "item",
+          formatter: "{a}<br/>{b} : {c}元"
+        },
+        xAxis: {
+          type: "category",
+          position: "bottom",
+          // 等同于 axisLine: true    开始
+          axisLine: {
+            show: true
+          },
+          axisTick: {
+            show: false
+          },
+          // 等同于 axisLine: true    结束
+          axisLabel: {
+            color: "#666",
+            fontSize: 12
+          },
+          data: ["18~30岁", "31~40岁", "41~50岁", "51~60岁", "61~70岁"]
+        },
+        yAxis: {
+          splitNumber: 5, // 坐标轴的分割段数，需要注意的是这个分割段数只是个预估值，最后实际显示的段数会在这个基础上根据分割后坐标轴刻度显示的易读程度作调整。在类目轴中无效。
+          // 等同于 axisLine: true    开始
+          axisLine: {
+            show: false
+          },
+          axisTick: {
+            show: false
+          },
+          // 等同于 axisLine: true    结束
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: "#666",
+              opacity: 0.9
+            }
+          },
+          axisLabel: {
+            color: "#DDDDDD",
+            fontSize: 12
+          }
+        },
+        series: [
+          {
+            name: "入账金额",
+            type: "line",
+            data: ["200", "102", "422", "189", "12"],
+            smooth: true,
+            symbol: "emptyCircle",
+            symbolSize: 5,
+            itemStyle: {
+              normal: {
+                color: "#DDDDDD"
+              }
+            },
+            lineStyle: {
+              normal: {
+                color: {
+                  type: "linear",
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [
+                    {
+                      offset: 0,
+                      color: "#315A6E" // 0% 处的颜色
+                    },
+                    {
+                      offset: 1,
+                      color: "#315A6E" // 100% 处的颜色
+                    }
+                  ],
+                  globalCoord: false // 缺省为 false
+                },
+                width: 3
+              }
+            },
+            areaStyle: {
+              normal: {
+                color: "rgba(51,255,255,0.3)"
+              }
+            }
+          }
+        ]
+      },
+      notices: [
+        {
+          name: "客户预约",
+          number: 110,
+          color: "#64B0F2",
+          icon: "el-icon-position",
+          path:"cashRegister_gukeyuyue",
+          path_name: "客户预约"
+        },
+        {
+          name: "员工通知",
+          number: 20,
+          color: "#F1B53D",
+          icon: "el-icon-bell",
+          path:"yuangongtongzhi",
+          path_name: "员工通知"
+        },
+        {
+          name: "库存预警",
+          number: 340,
+          color: "#3DB9DC",
+          icon: "el-icon-warning-outline",
+          path:"Stock_kucuntongji",
+          path_name: "库存统计"
+        },
+        {
+          name: "客户订货",
+          number: 40,
+          color: "#FF5D48",
+          icon: "el-icon-document",
+          path:"cashRegister_kehudinghuo",
+          path_name: "客户订货"
+        }
+      ],
+      help: false,
+      drawer: false,
+      opinion: "",
+      data_analysis: [
+        { key: 1, title: "智能统车PC上线", num: 0, content: "敬请关注" },
+        { key: 2, title: "小程序联动版上线", num: 0, content: "敬请关注" },
+        { key: 3, title: "移动端会员版上线", num: 0, content: "敬请关注" }
+      ],
+      feedback: [
+        {
+          key: 1,
+          title: "说明",
+          num: "请点击上方绿色按钮帮助",
+          content: "模块帮助"
+        }
+      ],
+      software_help: [
+        { key: 1, title: "投诉/建议", num: "0", content: "您的留言次数" },
+        { key: 2, title: "服务咨询", num: "18816899799", content: "咨询电话" },
+        { key: 3, title: "QQ咨询", num: "1010022400", content: "QQ" },
+        { key: 4, title: "微信咨询", num: "xiexw188", content: "微信" }
+      ],
+
+      notice: [
+        { key: 1, num: "v1.3", content: "智能统车PC端上线" },
+        { key: 2, num: "v1.2", content: "小程序联动版本上线" },
+        { key: 3, num: "v1.0", content: "移动端会员端上线" }
+      ]
+    };
+  },
+  mounted() {
+    var myChart = this.$echarts.init(document.getElementById("lostCustomer"));
+    var secondCustomer = this.$echarts.init(
+      document.getElementById("secondCustomer")
+    )
+    this.$api.HttpPost("/storeadmin/index/index").then(v => {
+      if (v.data.code == 200) {
+        let data = v.data.data;
+        this.barOption.xAxis.data = data.yingye.time;
+        this.barOption.series[0].data = data.yingye.val;
+        myChart.setOption(this.barOption);
+
+        this.option.xAxis.data = data.ruzhang.time;
+        this.option.series[0].data = data.ruzhang.val;
+        secondCustomer.setOption(this.option);
+
+        const {progressArr} = this
+        progressArr[0].value = data.huiyuantaici
+        progressArr[1].value = data.sanketaici
+        progressArr[2].value = data.xinketaici
+        progressArr[3].value = data.laoketaici
+        progressArr[4].value = data.huiyuanxiaofei
+        progressArr[5].value = data.sankexiaofei
+        progressArr[6].value = data.laokexiaofei
+        progressArr[7].value = data.xinkexiaofei
+
+        const {notices} = this
+        notices[0].number = data.kehuyuyue
+        notices[1].number = data.yuangongtongzhi
+        notices[2].number = data.kucunyujing
+        notices[3].number = data.kehudinghuo
+      }
+    });
+
+  },
+  methods: {
+    goToRouter(path, name) {
+      this.$store.commit("change_tag", {path, name})
+    },
+    data_analysis_change: function(s) {
+      console.log(s);
+    },
+    feedback_change: function(s) {
+      console.log(s);
+    },
+    software_help_change: function(s) {
+      console.log(s);
+    },
+    day_board: function(bt, s) {
+      if (s === 1) {
+        this.$router.push({ name: "cashRegister_weixiukaidan" });
+      } else if (s === 2) {
+        this.$router.push({ name: "Member_tongji" });
+      } else if (s === 3) {
+        this.$router.push({ name: "Stock_kucuntongji" });
+      }
+    },
+    DataAnalysis: function() {
+      this.help = false;
+    },
+    FeedBack: function() {
+      this.help = true;
+    },
+    SoftwareHelp: function() {
+      this.drawer = true;
+    }
+  }
+};
+</script>
+
+<style scoped>
+#home {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-image: linear-gradient(#f8f8f8, #f0f0f0);
+  padding-top: 1rem;
+}
+.echarts-wrap {
+  width: 100%;
+  height: 300px;
+  border: 1px solid #c4c4c4;
+  box-shadow: 0 0px 7px -5px rgba(0, 0, 0, 0.5);
+  transition: all 0.7s;
+}
+.echarts-wrap:hover {
+  box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.5);
+}
+.statistics {
+  background-color: gray;
+  height: 145px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  padding: 30px;
+  box-sizing: border-box;
+}
+.Announcement {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 115px;
+  padding: 20px;
+  color: #fff;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.Announcement:hover {
+  box-shadow: 5px 5px 5px #e0e0e0;
+  transform: scale(1.05);
+}
+.Announcement-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  margin-top: -10px;
+  /* align-items: center; */
+}
+.right-part {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 600px;
+  box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.5);
+  padding: 15px;
+}
+.right-part-title {
+  padding: 10px 0;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 30px;
+}
+.right-part-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.right-part-item:first-child {
+  font-size: 14px;
+  color: #2b2424;
+}
+.right-part-item:last-child {
+  font-size: 15px;
+  font-weight: 600;
+  color: blue;
+}
+.el-card__header {
+  padding: 10px;
+}
+.el-card__body {
+  padding: 10px;
+}
+</style>

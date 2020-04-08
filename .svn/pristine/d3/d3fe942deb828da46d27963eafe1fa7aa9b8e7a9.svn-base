@@ -1,0 +1,509 @@
+<template>
+  <div id="two">
+    <!-- 产品信息管理 -->
+    <div v-if="is_state === 0" :key="is_state">
+      <div class="pb-nav" >
+        <el-button size="mini" type="primary" icon="el-icon-plus" @click="modify(null, 1)">添加</el-button>
+        <el-button size="mini" type="info" icon="el-icon-c-scale-to-original" @click="commodity()">商品分类</el-button>
+        <el-button size="mini" type="info" icon="el-icon-download" @click="download()">导出</el-button>
+        <el-input style="margin-left: 10px; width: 25rem;" size="mini" placeholder="可按供应商名称,规格等进行搜索" v-model="key_name"><template slot="prepend">关键字</template></el-input>
+        <el-select size="mini" v-model="state_name" clearable placeholder="状态" @change="state_change">
+          <el-option v-for="value in state_select" :key="value.id" :label="value.label" :value="value.id"></el-option>
+        </el-select>
+        <el-select size="mini" v-model="type_name" placeholder="所属分类" clearable @clear="type_clear">
+          <el-option :value="type_name" :label="type_name" class="tree-select">
+            <el-tree :data="type_select" :props="{children: 'children', label: 'classify_name'}" @node-click="node_click"></el-tree>
+          </el-option>
+        </el-select>
+        <el-select size="mini" v-model="store_name" clearable placeholder="所属门店" @change="store_change">
+          <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+        </el-select>
+        <el-button size="mini" type="primary" @click="search()">查询</el-button>
+      </div>
+      <mytable :tableTitle="tableTitle" :tableData="tableData" :operation_="operation_" :operation_name="operation_name"
+      @resData="resData" @handlePageChange="handlePageChange" @modify="modify" @del="del" @operat="operat" ref="mytable"></mytable>
+    </div>
+    <!-- 商品分类 -->
+    <div v-if="is_state === 1" :key="is_state">
+      <div class="pb-nav">
+        <el-button size="mini" @click="is_state = 0">返回</el-button>
+        <el-button size="mini" type="primary" icon="el-icon-plus" @click="modify1(null, 1)">添加</el-button>
+        <el-button size="mini" type="danger" icon="el-icon-delete" @click="del1()">删除</el-button>
+        <el-input style="margin-left: 10px; width: 25rem;" size="mini" v-model="key_name"><template slot="prepend">关键字</template></el-input>
+        <el-select size="mini" v-model="store1_name" clearable placeholder="所属门店" @change="store1_change">
+          <el-option v-for="value in store_select" :key="value.sid" :label="value.store_name" :value="value.sid"></el-option>
+        </el-select>
+        <el-button size="mini" type="primary" @click="search1()">查询</el-button>
+      </div>
+      <vxe-table size="mini" highlight-hover-row border :data="tableData1" :tree-config="{children: 'children', label: 'classify_name', expandAll: true}"
+      :checkbox-config="{checkStrictly: true, reserve: true, trigger: 'row'}" ref="table1">
+        <vxe-table-column type="checkbox" min-width="50"></vxe-table-column>
+        <vxe-table-column field="classify_name" title="分类名称" tree-node></vxe-table-column>
+        <vxe-table-column field="record_name" title="档案分类" min-width="200"></vxe-table-column>
+        <vxe-table-column field="create_time" title="创建时间" min-width="200"></vxe-table-column>
+        <vxe-table-column title="操作" width="150">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="modify1(scope, 2)">修改</el-button>
+            <el-button style="color: red;" size="mini" type="text" @click="del1(scope)">删除</el-button>
+          </template>
+        </vxe-table-column>
+      </vxe-table>
+    </div>
+    <!-- 产品信息弹出框 -->
+    <el-dialog title="商品资料" :visible.sync="dialog" :close-on-click-modal="false">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <el-input size="mini" v-model="d.a"><label slot="prepend">条形码&#12288</label></el-input>
+          <el-input size="mini" v-model="d.b"><label slot="prepend" style="color: red;">商品名称</label></el-input>
+          <el-input size="mini" v-model="d.c"><label slot="prepend" style="color: red;">销售价格</label></el-input>
+          <el-input size="mini" v-model="d.d"><label slot="prepend">商品编码</label></el-input>
+          <el-input size="mini" v-model="d.e"><label slot="prepend">型号规格</label></el-input>
+          <el-input size="mini" v-model="d.f"><label slot="prepend">最低库存</label></el-input>
+          <el-input size="mini" v-model="d.g"><label slot="prepend">最高库存</label></el-input>
+          <el-input size="mini" v-model="d.h"><label slot="prepend" style="color: red;">批发价格</label></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-select class="effective" size="mini" style="width: 100%;" v-model="dialog_a" placeholder="计量单位" @change="dialog_a_change" clearable>
+            <el-option v-for="value in dialog_a_select" :key="value.id" :label="value.unit_name" :value="value.id"></el-option>
+          </el-select>
+          <el-select size="mini" style="width: 100%;" v-model="dialog_b" placeholder="配件属性" @change="dialog_b_change" clearable>
+            <el-option v-for="value in dialog_b_select" :key="value.id" :label="value.accessory_name" :value="value.id"></el-option>
+          </el-select>
+          <el-select class="effective" size="mini" style="width: 100%;" v-model="dialog_c" placeholder="所属分类" clearable>
+            <el-option :value="dialog_c" :label="dialog_c" class="tree-select">
+              <el-tree :data="type_select" :props="{children: 'children', label: 'classify_name'}" @node-click="dialog_c_node_click"></el-tree>
+            </el-option>
+          </el-select>
+          <el-select size="mini" style="width: 100%;" v-model="dialog_d" placeholder="默认仓库" clearable>
+            <el-option :value="dialog_d" :label="dialog_d" class="tree-select">
+              <el-tree :data="dialog_d_select" :props="{children: 'children', label: 'repertory_name'}" @node-click="dialog_d_node_click"></el-tree>
+            </el-option>
+          </el-select>
+           <el-input v-model="dialog_img" size="mini" disabled>
+            <label slot="prepend">图片</label>
+            <el-upload slot="append" :action="this.$api.yuming+'/StoreAdmin/Common/uploadImg'" :show-file-list="false"
+            :before-upload="before_upload" :http-request="jsz_http_img">
+              <el-button size="mini" type="success" plain>上传</el-button>
+            </el-upload>
+            <el-popover slot="suffix" placement="bottom" trigger="click">
+              <el-image style="width: 150px; height: 100px" fit="cover" :src="jsz_list[0]" :preview-src-list="jsz_list"></el-image>
+              <el-button slot="reference" size="mini" type="success" plain @click="show_jsz()">预览</el-button>
+            </el-popover>
+          </el-input>
+          <!-- <el-input size="mini" v-model="dialog_img" disabled><label slot="prepend">图片</label><el-button slot="append" plain type="success" @click="dl()">上传</el-button></el-input> -->
+          <el-switch v-model="d.i" inactive-text="共享"></el-switch>
+        </el-col>
+      </el-row>
+      <el-input size="mini" v-model="d.j" type="textarea" placeholder="备注"></el-input>
+      <div slot="footer" class="dialog-footer">
+        <el-button size="mini" @click="cancel">取 消</el-button>
+        <el-button size="mini" type="primary" @click="dialog_enter()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 商品分类弹出框 -->
+    <el-dialog title="商品分类" :visible.sync="dialog1" :close-on-click-modal="false">
+      <el-input size="mini" v-model="d1.a"><label slot="prepend" style="color: red;">分类名称</label></el-input>
+      <el-input size="mini" v-model="d1.b"><label slot="prepend">排序&#12288&#12288</label></el-input>
+      <el-select size="mini" style="width: 100%;" v-model="dialog1_a" placeholder="档案分类" @change="dialog1_a_change" clearable>
+        <el-option v-for="value in dialog1_a_select" :key="value.id" :label="value.record_name" :value="value.id"></el-option>
+      </el-select>
+      <el-select size="mini" style="width: 100%;" v-model="dialog1_b" placeholder="所属分类" clearable>
+        <label style="color: red; line-height: 32px;" slot="prefix">*</label>
+        <el-option :value="dialog1_b" :label="dialog1_b" class="tree-select">
+          <el-tree :data="type_select" :props="{children: 'children', label: 'classify_name'}" @node-click="dialog1_b_node_click"></el-tree>
+        </el-option>
+      </el-select>
+      <el-input size="mini" v-model="d1.c" type="textarea" placeholder="备注"></el-input>
+      <el-switch v-model="d1.d" inactive-text="共享"></el-switch>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog1=false">取 消</el-button>
+        <el-button type="primary" @click="dialog1_enter()">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "./../../mytable.vue"
+export default{
+  name: "two",
+  components:{
+    mytable
+  },
+  data(){
+    return{
+      customer_card_img:"",
+      jsz_list: [],
+      is_state: 0,
+      //配置
+      tableTitle: [
+        {key: "product_name", title: "商品名称", min_width: "100"},
+        {key: "product_type", title: "规格", min_width: "100"},
+        {key: "product_code", title: "商品编码", min_width: "100"},
+        {key: "classify_name", title: "所属分类", min_width: "100"},
+        {key: "product_price", title: "销售价格", min_width: "100"},
+        {key: "wholesale_price", title: "批发价格", min_width: "100"},
+        {key: "barcode", title: "条形码", min_width: "100"},
+        {key: "unit_name", title: "单位", min_width: "100"},
+        {key: "accessory_name", title: "配件属性", min_width: "100"},
+        {key: "status", title: "状态", min_width: "100"},
+        {key: "remark", title: "备注", min_width: "100"},
+        {key: "store_name", title: "所属门店", min_width: "100"}
+      ],
+      tableData: [],
+      tableData1: [],
+      operation_: true,
+      operation_name: "停用|启用",
+      dialog: false,
+      dialog1: false,
+      dialog2: false,
+      //数据
+      key_name: "",
+      state_name: "",
+      state_select: [{label: "正常", id: 1}, {label: "停用", id: 0}],
+      type_name: "",
+      type_id: "",
+      type_select: [],
+      store_name: JSON.parse(localStorage.date).data.sid,
+      store1_name: JSON.parse(localStorage.date).data.sid,
+      store_select: [],
+
+      d: {
+        a: "",
+        b: "",
+        c: "",
+        d: "",
+        e: "",
+        f: "",
+        g: "",
+        h: "",
+        i: true,
+        j: ""
+      },
+      dialog_id: "",
+      dialog_a: "",
+      dialog_a_select: [],
+      dialog_b: "",
+      dialog_b_select: [],
+      dialog_c: "",
+      dialog_c_id: "",
+      dialog_d: "",
+      dialog_d_id: "",
+      dialog_d_select: [],
+      dialog_img: "",
+      add_type: "",
+
+      d1: {
+        a: "",
+        b: "",
+        c: "",
+        d: true
+      },
+      dialog1_a: "",
+      dialog1_a_id: "",
+      dialog1_a_select: [],
+      dialog1_b: "",
+      dialog1_b_id: "",
+    }
+  },
+  methods: {
+    cancel() {
+      this.dialog = false
+      this.dialog_img = ""
+    },
+    show_jsz(){
+      this.$api.HttpPost("/StoreAdmin/Common/getOssPath", {})
+      .then((data)=>{
+        this.jsz_list.splice(0, 0, data.data + this.dialog_img);
+        console.log(this.jsz_list)
+      })
+    },
+    before_upload(file){
+      this.$api.img_before_upload(file);
+    },
+    jsz_http_img(file){
+      this.$api.img_upload(file)
+      .then((data)=>{
+        this.dialog_img = data.data;
+      })
+    },
+    search(){
+      this.handlePageChange({search: this.key_name, status: this.state_name, classify_id: this.type_id, sid: this.store_name});
+    },
+    search1(){
+      this.commodity();
+    },
+    download(){
+      this.$refs.mytable.$refs.xTable.exportData({type: "csv"});
+    },
+    commodity(){
+      this.is_state = 1;
+      this.$axios.all([
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getRecordSelect", {}, {withCredentials: true}),
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getProductClassifyList", {sid: this.store1_name}, {withCredentials: true})
+      ])
+      .then((data)=>{
+         this.dialog1_a_select = data[0].data.data;
+         this.tableData1 = data[1].data.data;
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    state_change(s){
+      this.state_name = s;
+    },
+    node_click(row){
+      this.type_name = row.classify_name;
+      this.type_id = row.id;
+    },
+    type_clear(){
+      this.type_id = "";
+    },
+    store_change(s){
+      this.store_name = s;
+    },
+    store1_change(s){
+      this.store1_name = s;
+    },
+    dialog_a_change(s){
+      this.dialog_a = s;
+    },
+    dialog_b_change(s){
+      this.dialog_b = s;
+    },
+    dialog1_a_change(s){
+      this.dialog1_a_id = s;
+    },
+    dialog2_a_change(s){
+      this.dialog2_a_id = s;
+    },
+    dialog_c_node_click(row){
+      this.dialog_c = row.classify_name;
+      this.dialog_c_id = row.id;
+    },
+    dialog_d_node_click(row){
+      this.dialog_d = row.repertory_name;
+      this.dialog_d_id = row.id;
+    },
+    dialog1_b_node_click(row){
+      this.dialog1_b = row.classify_name;
+      this.dialog1_b_id = row.id;
+    },
+    modify(row, key){
+      this.dialog = true;
+      this.init();
+      this.add_type = key;
+      this.dialog_id = "";
+      this.d = {a: "", b: "", c: "", d: "", e: "", f: "", g: "", h: "", i: "", j: ""};
+      this.dialog_a = "";
+      this.dialog_b = "";
+      this.dialog_c = "";
+      this.dialog_d = "";
+      this.dialog_img = "";
+      if(key == 2){
+        this.dialog_id = row.row.id;
+        this.d.a = row.row.barcode;
+        this.d.b = row.row.product_name;
+        this.d.c = row.row.product_price;
+        this.d.d = row.row.product_code;
+        this.d.e = row.row.product_type;
+        this.d.f = row.row.minimum;
+        this.d.g = row.row.maximum;
+        this.d.h = row.row.wholesale_price;
+        this.d.i = row.row.is_share;
+        this.d.j = row.row.remark;
+        this.dialog_a = row.row.unit_id;
+        this.dialog_b = row.row.accessory_id;
+        this.dialog_c = row.row.classify_name;
+        this.dialog_c_id = row.row.classify_id;
+        this.dialog_d = row.row.repertory_name;
+        this.dialog_d_id = row.row.repertory_id;
+        this.dialog_img = row.row.product_picture;
+        console.log(this.dialog_img)
+      }
+    },
+    del(row){
+      this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/deleteProduct", {id: row.row.id}, {withCredentials: true})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    operat(row){
+      this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/changeProductStatus", {id: row.row.id}, {withCredentials: true})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    dl(){
+      //上传图片
+    },
+    dialog_enter(){
+      if(this.d.i){this.d.i = 1}
+      else{this.d.i = 0}
+      this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/addOrUpdateProduct",
+      {add_type: this.add_type,
+      id: this.dialog_id,
+      barcode: this.d.a,
+      // product_picture:this.customer_card_img,
+      product_name: this.d.b,
+      product_price: this.d.c,
+      unit_id: this.dialog_a,
+      minimum: this.d.f,
+      maximum: this.d.g,
+      wholesale_price: this.d.h,
+      product_code: this.d.d,
+      product_type: this.d.e,
+      accessory_id: this.dialog_b,
+      classify_id: this.dialog_c_id,
+      repertory_id: this.dialog_d_id,
+      product_picture: this.dialog_img,
+      is_share: this.d.i,
+      remark: this.d.j}, {withCredentials: true})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.handlePageChange();
+          this.$message.success(data.data.msg);
+          this.dialog = false;
+          this.jsz_list = []
+          this.dialog_img = ""
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    modify1(row, key){
+      this.dialog1 = true;
+      this.init();
+      this.add_type = key;
+      this.dialog_id = "";
+      this.d1 = {a: "", b: "", c: "", d: ""};
+      this.dialog1_a = "";
+      this.dialog1_b = "";
+      if(key == 2){
+        this.dialog_id = row.row.id;
+        this.d1.a = row.row.classify_name;
+        this.d1.b = row.row.sort;
+        this.d1.c = row.row.remark;
+        this.d1.d = row.row.is_share;
+        this.dialog1_a = row.row.record_id;
+        this.dialog1_b = row.row.pid;
+      }
+    },
+    del1(row){
+      this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/deleteProductClassify", {id: row.row.id}, {withCredentials: true})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.commodity();
+          this.$message.success(data.data.msg);
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    dialog1_enter(){
+      if(this.d1.d){this.d1.d = 1}
+      else{this.d.i = 0}
+      this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/addOrUpdateProductClassify",
+      {add_type: this.add_type,
+      id: this.dialog_id,
+      classify_name: this.d1.a,
+      pid: this.dialog1_b_id,
+      sid: this.store1_name,
+      record_id: this.dialog1_a_id,
+      sort: this.d1.b,
+      is_share: this.d1.d,
+      remark: this.d1.c}, {withCredentials: true})
+      .then((data)=>{
+        if(data.data.code === 200){
+          this.commodity();
+          this.$message.success(data.data.msg);
+          this.dialog1 = false;
+          
+        }
+        else{
+          this.$message.error(data.data.msg);
+        }
+      })
+      .catch((data)=>{
+        this.$message.error("抱歉网络错误,请检查网络后重试！");
+      })
+    },
+    resData(data){
+      this.tableData = data;
+      for(let i in this.tableData){
+        if(this.tableData[i].status == 0){
+          this.tableData[i].status = "停用";
+        }
+        else if(this.tableData[i].status == 1){
+          this.tableData[i].status = "启用";
+        }
+      }
+    },
+    handlePageChange(data){
+      if(data === undefined){data = {}}
+      this.$refs.mytable.findList(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getProductList", data);
+    },
+    init(){
+      this.$axios.all([
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Common/getStoreSelect", {}, {withCredentials: true}),
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getProductClassifySelect", {}, {withCredentials: true}),
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getRepertorySelect", {}, {withCredentials: true}),
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getUnitSelect", {}, {withCredentials: true}),
+        this.$axios.post(this.$store.state.domainName_http+"/StoreAdmin/Inventory/getAccessorySelect", {}, {withCredentials: true})
+      ])
+      .then((data)=>{
+        console.log(data)
+        this.store_select = data[0].data;
+        this.type_select = data[1].data.data;
+        this.dialog_d_select = data[2].data.data;
+        this.dialog_a_select = data[3].data.data;
+        this.dialog_b_select = data[4].data.data;
+      })
+    }
+  },
+  created(){
+    this.init();
+    this.$nextTick(()=>{
+      this.handlePageChange();
+    })
+  }
+}
+</script>
+
+<style scoped>
+#two{
+  margin: 1rem 5rem;
+}
+.tree-select{
+  height: 200px;
+  overflow: auto;
+  background-color: #ffffff;
+}
+</style>

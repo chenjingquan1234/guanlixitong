@@ -1,0 +1,33 @@
+<template>
+  <div id="demo">
+
+  </div>
+</template>
+
+<script>
+export default{
+	name: "demo",
+	data(){
+	  return{
+      tcp: "",
+      ip: ""
+		}
+	},
+	methods:{
+
+	},
+	created(){
+    this.$axios.post("https://www.zhuwb.cn/php/test.php", {})
+    .thenn((data)=>{
+      console.log(data);
+    })
+	},
+	mounted(){
+
+	}
+}
+</script>
+
+<style scoped>
+
+</style>

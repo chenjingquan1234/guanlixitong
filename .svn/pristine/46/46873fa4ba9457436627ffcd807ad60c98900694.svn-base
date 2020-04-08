@@ -1,0 +1,1273 @@
+<template>
+  <div id="Member_huiyuanbanka">
+    <el-row class="row">
+      <el-col :span="2"></el-col>
+      <el-col
+        :span="5"
+        v-for="value in list"
+        :key="value.key"
+        class="column"
+        :class="{'mouse-class': mouseClass===value.key}"
+        @mouseenter.native="mouseClass=value.key"
+        @mouseleave.native="mouseClass=false"
+        @click.native="card(value.key)"
+      >
+        <img :src="value.img" alt="error" />
+        <el-divider>
+          <h4>{{value.name}}</h4>
+        </el-divider>
+        <router-link :to="{name: value.url}">
+          <el-button size="mini" round @click="seeForm(value.key, value.url)">{{value.bname}}</el-button>
+        </router-link>
+      </el-col>
+    </el-row>
+
+    <!-- 储值办卡 -->
+    <el-dialog title="储值办卡" :visible.sync="dialog" :close-on-click-modal="false">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <h3>基础资料</h3>
+          <el-input size="mini" v-model="customer_name" @input="search_1">
+            <label slot="prepend">客户</label>
+            <el-dropdown slot="append" trigger="click" ref="kehu1" @visible-change="visibleChange">
+              <label class="el-icon-arrow-down el-icon--right"></label>
+              <el-dropdown-menu slot="dropdown" >
+                <mytable
+                  :tableTitle="tableTitle"
+                  :tableData="tableData"
+                  :operation="operation"
+                  @cell_click="cell_click"
+                  :check_box="false"
+                  @resData="resData"
+                  @handlePageChange="handlePageChange"
+                  ref="mytable"
+                ></mytable>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </el-input>
+          <el-input size="mini" disabled v-model="name">
+            <label slot="prepend">姓名</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="license_plate_number">
+            <label slot="prepend">车牌</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="tel">
+            <label slot="prepend">手机</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="p_chexingmingcheng">
+            <label slot="prepend">车型</label>
+          </el-input>
+        </el-col>
+        <el-col :span="12">
+          <h3>办卡信息</h3>
+          <el-select size="mini" v-model="dialog_a" placeholder="会员卡种" @change="dialog_a_change">
+            <label style="color: red; line-height: 32px;" slot="prefix">*</label>
+            <el-option
+              v-for="(value, key) in dialog_a_select"
+              :key="value.id"
+              :label="value.card_name"
+              :value="value.id"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog_b">
+            <label slot="prepend" style="color: red;">卡号&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" type="password" v-model="dialog_c">
+            <label slot="prepend">密码&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_d">
+            <label slot="prepend" style="color: red;">充值金额</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_e" placeholder="本次办卡赠送的金额">
+            <label slot="prepend" style="color: red;">赠送金额</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_f" placeholder="本次办卡赠送的积分">
+            <label slot="prepend">赠送积分</label>
+          </el-input>
+          <el-select
+            size="mini"
+            v-model="dialog_g"
+            multiple
+            placeholder="选中提成人员"
+            @change="dialog_g_change"
+          >
+            <el-option
+              v-for="(value) in dialog_g_select"
+              :key="value.eid"
+              :label="value.name"
+              :value="value.eid"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog_h">
+            <label slot="prepend">备注&#12288&#12288</label>
+          </el-input>
+        </el-col>
+      </el-row>
+      <!--  -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog = false">取 消</el-button>
+        <el-button type="primary" @click="show_dialog()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 次数办卡 -->
+    <el-dialog title="次数办卡" :visible.sync="dialog1" :close-on-click-modal="false">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <h3>基础资料</h3>
+          <el-input size="mini" @input="search_2" v-model="customer_name">
+            <label slot="prepend">客户</label>
+            <el-dropdown slot="append" ref="kehu2"  @visible-change="visibleChange">
+              <label class="el-icon-arrow-down el-icon--right"></label>
+              <el-dropdown-menu slot="dropdown">
+                <mytable
+                  :tableTitle="tableTitle"
+                  :tableData="tableData"
+                  :operation="operation"
+                  @cell_click="cell_click"
+                  @resData="resData"
+                  :check_box="false"
+                  @handlePageChange="handlePageChange"
+                  ref="mytable"
+                ></mytable>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </el-input>
+          <el-input size="mini" disabled v-model="name">
+            <label slot="prepend">姓名</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="license_plate_number">
+            <label slot="prepend">车牌</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="tel">
+            <label slot="prepend">手机</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="p_chexingmingcheng">
+            <label slot="prepend">车型</label>
+          </el-input>
+        </el-col>
+        <el-col :span="12">
+          <h3>办卡信息</h3>
+          <el-select size="mini" v-model="dialog_a" placeholder="会员卡种" @change="dialog_a_change">
+            <label style="color: red; line-height: 32px;" slot="prefix">*</label>
+            <el-option
+              v-for="(value, key) in dialog_a_select"
+              :key="value.id"
+              :label="value.card_name"
+              :value="value.id"
+            ></el-option>
+          </el-select>
+          <el-select size="mini" v-model="dialog1_b" placeholder="计次套餐" @change="dialog1_b_change">
+            <label style="color: red; line-height: 32px;" slot="prefix">*</label>
+            <el-option
+              v-for="(value, key) in dialog1_b_select"
+              :key="value.id"
+              :label="value.package_name"
+              :value="value.id"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog1_c">
+            <label slot="prepend" style="color: red;">卡号&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" type="password" v-model="dialog1_d">
+            <label slot="prepend">密码&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog1_e">
+            <label slot="prepend">套餐售价</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog1_f" placeholder="本次办卡优惠的金额">
+            <label slot="prepend">优惠金额</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog1_g" placeholder="本次办卡赠送的积分">
+            <label slot="prepend">赠送积分</label>
+          </el-input>
+          <el-select
+            size="mini"
+            v-model="dialog_g"
+            multiple
+            placeholder="选中提成人员"
+            @change="dialog_g_change"
+          >
+            <el-option
+              v-for="(value, key) in dialog_g_select"
+              :key="value.eid"
+              :label="value.name"
+              :value="value.eid"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog1_i">
+            <label slot="prepend">备注&#12288&#12288</label>
+          </el-input>
+        </el-col>
+      </el-row>
+      <!--  -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog1 = false">取 消</el-button>
+        <el-button type="primary" @click="show_dialog()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 储值卡充值 -->
+    <el-dialog title="储值卡充值" :visible.sync="dialog2" :close-on-click-modal="false">
+      <h3>计次卡续费</h3>
+      <el-input size="mini" v-model="customer_name_" @input="search_3">
+        <label slot="prepend">客户搜索</label>
+        <el-dropdown slot="append" ref="kehu3" @visible-change="visibleChange2">
+          <label class="el-icon-arrow-down el-icon--right"></label>
+          <el-dropdown-menu slot="dropdown">
+            <mytable
+              :tableTitle="tableTitle1"
+              :tableData="tableData1"
+              :operation="operation"
+              @cell_click="cell_click_"
+              @resData="resData1"
+              :check_box="false"
+              @handlePageChange="handlePageChange1"
+              ref="mytable1"
+            ></mytable>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </el-input>
+      <el-input size="mini" disabled v-model="dialog2_a">
+        <label slot="prepend">卡号&#12288&#12288</label>
+      </el-input>
+      <el-input size="mini" disabled v-model="dialog2_b">
+        <label slot="prepend">卡内余额</label>
+      </el-input>
+      <el-input size="mini" v-model="dialog2_c">
+        <label slot="prepend">充值金额</label>
+      </el-input>
+      <el-input size="mini" v-model="dialog2_d">
+        <label slot="prepend">赠送金额</label>
+      </el-input>
+      <el-input size="mini" v-model="dialog2_e">
+        <label slot="prepend">赠送积分</label>
+      </el-input>
+      <el-select
+        size="mini"
+        v-model="dialog_g"
+        multiple
+        placeholder="选中提成人员"
+        @change="dialog_g_change"
+      >
+        <el-option
+          v-for="(value, key) in dialog_g_select"
+          :key="value.eid"
+          :label="value.name"
+          :value="value.eid"
+        ></el-option>
+      </el-select>
+      <el-input size="mini" v-model="dialog2_f">
+        <label slot="prepend">备注&#12288&#12288</label>
+      </el-input>
+      <!--  -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog2 = false">取 消</el-button>
+        <el-button type="primary" @click="show_dialog()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 次数卡充值 -->
+    <el-dialog title="次数卡充值" :visible.sync="dialog3" :close-on-click-modal="false">
+      <el-tabs v-model="dialog3_" type="card" @tab-click="tab_click">
+        <el-tab-pane label="计次卡套餐续费" name="one">
+          <el-input size="mini" v-model="customer_name_" @input="search_4">
+            <label slot="prepend">客户搜索</label>
+            <el-dropdown slot="append" ref="kehu4" @visible-change="visibleChange3">
+              <label class="el-icon-arrow-down el-icon--right"></label>
+              <el-dropdown-menu slot="dropdown">
+                <mytable
+                  :tableTitle="tableTitle1"
+                  :tableData="tableData1"
+                  :operation="operation"
+                  @cell_click="cell_click_"
+                  @resData="resData1"
+                  :check_box="false"
+                  @handlePageChange="handlePageChange2"
+                  ref="mytable2"
+                ></mytable>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </el-input>
+
+ 
+
+
+          <el-input size="mini" disabled v-model="dialog3_a">
+            <label slot="prepend">卡号&#12288&#12288</label>
+          </el-input>
+          <el-select size="mini" v-model="dialog1_b" placeholder="计次套餐" @change="dialog1_b_change_2">
+            <el-option
+              v-for="(value) in dialog1_b_select"
+              :key="value.id"
+              :label="value.package_name"
+              :value="value.id"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog3_b">
+            <label slot="prepend">套餐售价</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog3_c">
+            <label slot="prepend">优惠金额</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog3_d">
+            <label slot="prepend">赠送积分</label>
+          </el-input>
+          <el-select
+            size="mini"
+            v-model="dialog_g"
+            multiple
+            placeholder="选中提成人员"
+            @change="dialog_g_change"
+          >
+            <el-option
+              v-for="(value, key) in dialog_g_select"
+              :key="value.eid"
+              :label="value.name"
+              :value="value.eid"
+            ></el-option>
+          </el-select>
+          <el-input size="mini" v-model="dialog3_e">
+            <label slot="prepend">备注&#12288&#12288</label>
+          </el-input>
+        </el-tab-pane>
+        <el-tab-pane label="计次卡项目续费" name="two">
+          <el-row :gutter="10">
+            <el-col :span="12">
+              <el-input size="mini" v-model="customer_name_" @input="search_4">
+                <label slot="prepend">客户搜索</label>
+                <el-dropdown slot="append" @visible-change="visibleChange2">
+                  <label class="el-icon-arrow-down el-icon--right"></label>
+                  <el-dropdown-menu slot="dropdown">
+                    <mytable
+                      :tableTitle="tableTitle1"
+                      :tableData="tableData1"
+                      :operation="operation"
+                      @cell_click="cell_click_"
+                      @resData="resData1"
+                      :check_box="false"
+                      @handlePageChange="handlePageChange1"
+                      ref="mytable1"
+                    ></mytable>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </el-input>
+
+              <el-input size="mini" disabled v-model="dialog3_a_">
+                <label slot="prepend">姓名&#12288&#12288</label>
+              </el-input>
+              <el-input size="mini" disabled v-model="dialog3_b_">
+                <label slot="prepend">车牌&#12288&#12288</label>
+              </el-input>
+            </el-col>
+            <el-col :span="12">
+              <el-input size="mini" disabled v-model="dialog3_c_">
+                <label slot="prepend">卡号&#12288&#12288</label>
+              </el-input>
+              <el-select
+                size="mini"
+                v-model="dialog_g"
+                multiple
+                placeholder="选中提成人员"
+                @change="dialog_g_change"
+              >
+                <el-option
+                  v-for="(value) in dialog_g_select"
+                  :key="value.eid"
+                  :label="value.name"
+                  :value="value.eid"
+                ></el-option>
+              </el-select>
+              <el-input size="mini" v-model="dialog3_d_">
+                <label slot="prepend">金额&#12288&#12288</label>
+              </el-input>
+            </el-col>
+          </el-row>
+
+           <el-popover
+            @show="showPopover"
+            class="mytable"
+            placement="right"
+            :height="400"
+            trigger="click"
+          >
+            <mytable
+              :height="400"
+              :check_box="false"
+              :operation_mod="false"
+              :operation_del="false"
+              :tableTitle="tableTitl2"
+              :tableData="select_tableData"
+              @handlePageChange="handlePageChangeProduct"
+              @resData="resDataProduct"
+              @cell_click="cell_click_1"
+              ref="mytable"
+            ></mytable>
+            <el-input
+              size="mini"
+              v-model="search_value"
+              @input="searchStore"
+              slot="reference"
+              placeholder="请输入关键字"
+              style="margin-top:10px"
+            >
+              <template slot="prepend">计次项目搜索</template>
+              <el-button
+                slot="append"
+                style="background:#409EFF;color:#fff"
+                size="mini"
+                type="primary"
+              >添加计次项目</el-button>
+            </el-input>
+          </el-popover>
+
+          <vxe-table
+            size="mini"
+            border
+            highlight-hover-row
+            show-footer
+            max-height="400"
+            :data="dialog3_tableData"
+            :edit-config="{trigger: 'click', mode: 'cell', showStatus: true}"
+            @edit-actived="edit_actived"
+            @edit-closed="edit_closed"
+          >
+            <vxe-table-column field="service_item_name" title="套餐项目" min-width="200">
+            </vxe-table-column>
+            <vxe-table-column
+              field="dialog3_one"
+              title="有效期(单位:天)"
+              min-width="150"
+              :edit-render="{name: 'input'}"
+            ></vxe-table-column>
+            <vxe-table-column
+              field="dialog3_two"
+              title="数量"
+              min-width="100"
+              :edit-render="{name: 'input'}"
+            ></vxe-table-column>
+            <vxe-table-column field="price" title="单价" min-width="100"></vxe-table-column>
+            <vxe-table-column field="dialog3_three" title="总价" min-width="100"></vxe-table-column>
+            <vxe-table-column
+              field="dialog3_four"
+              title="实际售价"
+              min-width="100"
+              :edit-render="{name: 'input'}"
+            ></vxe-table-column>
+            <vxe-table-column title="操作" width="100">
+              <template slot-scope="scope">
+                <el-button size="mini" type="text" @click="dialog_modify(scope)">新增</el-button>
+                <el-button style="color: red;" size="mini" type="text" @click="dialog_del(scope)">删除</el-button>
+              </template>
+            </vxe-table-column>
+          </vxe-table>
+        </el-tab-pane>
+      </el-tabs>
+      <!--  -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog3 = false">取 消</el-button>
+        <el-button type="primary" @click="show_dialog()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 公共 -->
+    <el-dialog :visible.sync="dialog_pb" :close-on-click-modal="false">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <el-input size="mini" v-model="buckle_card">
+            <label slot="prepend">卡扣卡号</label>
+            <el-dropdown slot="append">
+              <label class="el-icon-arrow-down el-icon--right"></label>
+              <el-dropdown-menu slot="dropdown">
+                <mytable
+                  :tableTitle="tableTitle2"
+                  :tableData="tableData2"
+                  :operation="operation"
+                  @cell_click="cell_click_pb"
+                ></mytable>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </el-input>
+          <el-input size="mini" disabled v-model="dialog_pb_a">
+            <label slot="prepend">余额&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_pb_b" @input="dialog_pb_b_change">
+            <label slot="prepend">现金&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_pb_c">
+            <label slot="prepend">银联&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_pb_d">
+            <label slot="prepend">挂账&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_pb_e">
+            <label slot="prepend">卡扣金额</label>
+          </el-input>
+          <el-input size="mini" type="password" v-model="dialog_pb_f">
+            <label slot="prepend">密码&#12288&#12288</label>
+          </el-input>
+          <el-input size="mini" disabled v-model="dialog_pb_g">
+            <label slot="prepend">剩余金额</label>
+          </el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input size="mini" v-model="dialog_pb_wx">
+            <label slot="prepend">微信支付&#12288</label>
+          </el-input>
+          <el-input size="mini" v-model="dialog_pb_zfb">
+            <label slot="prepend">支付宝支付</label>
+          </el-input>
+        </el-col>
+      </el-row>
+      <!--  -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialog_pb = false">取 消</el-button>
+        <el-button type="primary" @click="dialog_enter()">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "./../mytable.vue";
+export default {
+  name: "Member_huiyuanbanka",
+  components: {
+    mytable
+  },
+  data() {
+    return {
+      search_value:"",
+      select_tableData:[],
+      tableTitl2: [
+        { key: "service_item_name", title: "商品名称", min_width: "100" },
+        { key: "specification", title: "规格", min_width: "100" },
+        { key: "price", title: "售价", min_width: "100" },
+        { key: "cost", title: "成本", min_width: "100" },
+        { key: "number", title: "条形码", min_width: "100" }
+      ],
+      //配置
+      list: [
+        {
+          key: 1,
+          name: "储值办卡",
+          bname: "办理记录",
+          img: require("../../assets/img/member_save_card.png"),
+          url: "Member_huiyuanbankaOne"
+        },
+        {
+          key: 2,
+          name: "次数办卡",
+          bname: "办理记录",
+          img: require("../../assets/img/member_number_card.png"),
+          url: "Member_huiyuanbankaOne"
+        },
+        {
+          key: 3,
+          name: "储值卡充值",
+          bname: "续费记录",
+          img: require("../../assets/img/member_save_money.png"),
+          url: "Member_huiyuanbankaOne"
+        },
+        {
+          key: 4,
+          name: "次数卡充值",
+          bname: "续费记录",
+          img: require("../../assets/img/member_number_money.png"),
+          url: "Member_huiyuanbankaOne"
+        }
+      ],
+      mouseClass: false,
+      operation: false,
+      dialog_pb: false,
+      dialog: false,
+      dialog1: false,
+      dialog2: false,
+      dialog3: false,
+      dialog3_: "one",
+      //数据
+      name: "",
+      license_plate_number: "",
+      tel: "",
+      p_chexingmingcheng: "",
+      customer_name: "",
+      customer_id: "",
+      dialog_a: "",
+      dialog_a_id: "",
+      dialog_a_select: [],
+      dialog_b: "",
+      dialog_c: "",
+      dialog_d: 0,
+      dialog_e: 0,
+      dialog_f: "",
+      dialog_g: "",
+      dialog_g_id: [],
+      dialog_g_select: [],
+      dialog_h: "",
+
+      dialog1_a: "",
+      dialog1_a_id: "",
+      dialog1_a_select: [],
+      dialog1_b: "",
+      dialog1_b_id: "",
+      dialog1_b_select: [],
+      dialog1_c: "",
+      dialog1_d: "",
+      dialog1_e: 0,
+      dialog1_f: 0,
+      dialog1_g: "",
+      dialog1_i: "",
+
+      customer_name_: "",
+      customer_id_: "",
+      dialog2_a: "",
+      dialog2_b: "",
+      dialog2_c: 0,
+      dialog2_d: 0,
+      dialog2_e: "",
+      dialog2_f: "",
+
+      dialog3_tag_key: 0,
+      dialog3_a: "",
+      dialog3_b: 0,
+      dialog3_c: 0,
+      dialog3_d: 0,
+      dialog3_e: "",
+      dialog3_a_: "",
+      dialog3_b_: "",
+      dialog3_c_: "",
+      dialog3_d_: 0,
+      //公共内嵌弹出框
+      tableTitle: [
+        { key: "name", title: "姓名", min_width: "100" },
+        { key: "license_plate_number", title: "车牌号", min_width: "100" },
+        { key: "tel", title: "手机号码", min_width: "100" }
+      ],
+      tableData: [],
+      tableTitle1: [
+        { key: "name", title: "客户姓名", min_width: "100" },
+        { key: "tel", title: "手机号码", min_width: "100" },
+        { key: "license_plate_number", title: "车牌号码", min_width: "100" },
+        { key: "card_no", title: "会员卡号", min_width: "100" },
+        { key: "card_name", title: "卡类型", min_width: "100" }
+      ],
+      tableData1: [],
+      tableTitle2: [
+        { key: "name", title: "姓名", min_width: "100" },
+        { key: "license_plate_number", title: "车牌", min_width: "100" },
+        { key: "card_no", title: "卡号", min_width: "100" }
+      ],
+      tableData2: [],
+      dialog3_tableTitle: [
+        { key: "service_item_name", title: "商品名称", min_width: "100" },
+        { key: "specification", title: "规格", min_width: "100" },
+        { key: "price", title: "售价", min_width: "100" },
+        { key: "cost", title: "成本", min_width: "100" },
+        { key: "number", title: "条形码", min_width: "100" }
+      ],
+      dialog3_tableData: [],
+      dialog3_selset: [],
+      s_two: "",
+      s_four: "",
+      buckle_card: "",
+      buckle_id: "",
+      dialog_pb_a: "",
+      dialog_pb_b: "",
+      dialog_pb_c: "",
+      dialog_pb_d: "",
+      dialog_pb_e: "",
+      dialog_pb_f: "",
+      dialog_pb_g: "",
+      dialog_pb_wx: "",
+      dialog_pb_zfb: ""
+    };
+  },
+  methods: {   
+    visibleChange(val) {
+      console.log(this.tableData.length)
+      if(val && this.tableData.length == 0) {
+        console.log(222)
+        this.handlePageChange()
+      }
+    },
+    visibleChange2(val) {
+      if(val &&this.tableData1.length == 0) {
+        this.handlePageChange1()
+      }
+    },
+    visibleChange3(val) {
+      if(val &&this.tableData1.length == 0) {
+        this.handlePageChange2()
+      }
+    },
+     showPopover() {
+      this.handlePageChangeProduct();
+    },
+    searchStore() {
+      this.handlePageChangeProduct({ search: this.search_value });
+    },
+    resDataProduct(data) {
+      this.select_tableData = data;
+    },
+    handlePageChangeProduct(data = {}) {
+      this.$refs.mytable.findList(
+        this.$api.yuming + "/StoreAdmin/Customer/getServiceItemSelect",
+        data
+      );
+    },
+    cell_click_1(scope) {
+      let id = scope.row.id;
+      this.dialog3_tableData.findIndex(item => item.id == id) != -1
+        ? this.$message.error("不能重复选择商品")
+        : this.dialog3_tableData.push(scope.row);
+    },
+    // getCellData(scope) {
+    //   console.log(scope);
+    //   this.customer_name_ = scope.row.name;
+    // },
+    // setModel(val) {
+    //   this.customer_name_ = val
+    // },
+    search_1() {
+      this.customer_name ? this.$refs.kehu1.show() : this.$refs.kehu1.hide();
+      this.handlePageChange({ search: this.customer_name });
+    },
+    search_2() {
+      this.customer_name ? this.$refs.kehu2.show() : this.$refs.kehu2.hide();
+      this.handlePageChange({ search: this.customer_name });
+    },
+    search_3() {
+      this.customer_name_ ? this.$refs.kehu3.show() : this.$refs.kehu3.hide();
+      this.handlePageChange1({ search: this.customer_name_ });
+    },
+    search_4() {
+      this.customer_name_ ? this.$refs.kehu4.show() : this.$refs.kehu4.hide();
+      this.handlePageChange1({ search: this.customer_name_ });
+    },
+    showTable() {
+      this.handlePageChange();
+    },
+    showTable1() {
+      this.handlePageChange1();
+    },
+    resData(data) {
+      this.tableData = data;
+       for (let i in this.tableData) {
+              this.tableData[i].license_plate_number =
+                this.tableData[i].plate_id +
+                this.tableData[i].license_plate_number;
+            }
+    },
+    handlePageChange(data = {}) {
+      this.$refs.mytable.findList(
+        this.$api.yuming + "/storeadmin/Order/getMemberSelect",
+        data
+      );
+    },
+    resData1(data) {
+      this.tableData1 = data;
+      for (let i in this.tableData) {
+              this.tableData[i].license_plate_number =
+                this.tableData[i].plate_id +
+                this.tableData[i].license_plate_number;
+            }
+    },
+    handlePageChange1(data = {}) {
+      this.$refs.mytable1.findList(
+        this.$api.yuming + "/StoreAdmin/Customer/getMembershipCardSelect",
+        data
+      );
+    },
+    handlePageChange2(data = {}) {
+      this.$refs.mytable2.findList(
+        this.$api.yuming + "/StoreAdmin/Customer/getMembershipCardSelect",
+        data
+      );
+    },
+    card: function(key) {
+      Object.assign(this.$data, this.$options.data());
+      switch (key) {
+        case 1: {
+          this.init();
+          this.dialog = true;
+          break;
+        }
+        case 2: {
+          this.init();
+          this.init1();
+          this.dialog1 = true;
+          break;
+        }
+        case 3: {
+          this.init2();
+          this.dialog2 = true;
+          break;
+        }
+        case 4: {
+          this.init1();
+          this.init2();
+          this.init3();
+          this.dialog3 = true;
+          break;
+        }
+      }
+    },
+    seeForm: function(key, url) {
+      this.$router.push({ name: url, query: { key: key } });
+    },
+    //初始化列表
+    init: function(key) {
+      this.$axios
+        .all([
+          this.$axios.post(
+            this.$store.state.domainName_http +
+              "/StoreAdmin/Customer/getCustomerSearchSelect",
+            { search: this.customer_name },
+            { withCredentials: true }
+          ),
+          this.$axios.post(
+            this.$store.state.domainName_http +
+              "/storeadmin/Customer/getMemberCardList",
+            { quantity: 1000 },
+            { withCredentials: true }
+          ),
+          this.$axios.post(
+            this.$store.state.domainName_http +
+              "/StoreAdmin/Common/getEmployeeSelect",
+            {},
+            { withCredentials: true }
+          )
+        ])
+        .then(data => {
+          if (
+            data[0].data.code === 200 ||
+            data[1].data.code === 200 ||
+            data[2].code === 200
+          ) {
+            // this.tableData = data[0].data.data.data;
+            // for (let i in this.tableData) {
+            //   this.tableData[i].license_plate_number =
+            //     this.tableData[i].plate_id +
+            //     this.tableData[i].license_plate_number;
+            // }
+            this.dialog_a_select = data[1].data.data.data;
+            this.dialog_g_select = data[2].data;
+          } else {
+            this.$message.error(data[0].data.msg);
+          }
+        })
+        .catch(data => {
+          this.$message.error("抱歉网络错误,请检查网络后重试！");
+        });
+    },
+    init1: function() {
+      this.$axios
+        .post(
+          this.$store.state.domainName_http +
+            "/StoreAdmin/Customer/getPackageSelect",
+          {},
+          { withCredentials: true }
+        )
+        .then(data => {
+          if (data.data.code === 200) {
+            this.dialog1_b_select = data.data.data;
+          } else {
+            this.$message.error(data.data.msg);
+          }
+        })
+        .catch(data => {
+          this.$message.error("抱歉网络错误,请检查网络后重试！");
+        });
+    },
+    init2: function() {
+      this.$axios
+        .all([
+          this.$axios.post(
+            this.$store.state.domainName_http +
+              "/StoreAdmin/Customer/getMembershipCardSelect",
+            {},
+            { withCredentials: true }
+          ),
+          this.$axios.post(
+            this.$store.state.domainName_http +
+              "/StoreAdmin/Common/getEmployeeSelect",
+            {},
+            { withCredentials: true }
+          )
+        ])
+        .then(data => {
+          if (data[0].data.code === 200 || data[1].code === 200) {
+            // this.tableData1 = data[0].data.data.data;
+            // for (let i in this.tableData1) {
+            //   this.tableData1[i].license_plate_number =
+            //     this.tableData1[i].plate_id +
+            //     this.tableData1[i].license_plate_number;
+            // }
+            this.dialog_g_select = data[1].data;
+          } else {
+            this.$message.error(data[0].data.msg);
+          }
+        })
+        .catch(data => {
+          this.$message.error("抱歉网络错误,请检查网络后重试！");
+        });
+    },
+    init3: function() {
+      this.$axios
+        .post(
+          this.$store.state.domainName_http +
+            "/StoreAdmin/Customer/getServiceItemSelect",
+          {},
+          { withCredentials: true }
+        )
+        .then(data => {
+          if (data.data.code === 200) {
+            for (let i in data.data.data.data) {
+              this.$set(this.dialog3_selset, i, data.data.data.data[i]);
+            }
+          } else {
+            this.$message.error(data.data.msg);
+          }
+        })
+        .catch(data => {
+          this.$message.error("抱歉网络错误,请检查网络后重试！");
+        });
+    },
+    cell_click_pb: function(row, column) {
+      this.buckle_id = row.row.id;
+      this.buckle_card = row.row.card_no;
+      this.dialog_pb_a = row.row.card_balance;
+    },
+    cell_click: function(row, column) {
+      this.customer_id = row.row.member_id;
+      this.customer_name = row.row.name;
+      this.name = row.row.name;
+      this.license_plate_number = row.row.license_plate_number;
+      this.tel = row.row.tel;
+      this.p_chexingmingcheng = row.row.p_chexingmingcheng;
+    },
+    cell_click_: function(row, column) {
+      this.customer_id_ = row.row.id;
+      this.customer_name_ = row.row.name;
+      this.dialog2_a = row.row.card_no;
+      this.dialog2_b = row.row.card_balance;
+      if (this.dialog3_tag_key == 0) {
+        this.dialog3_a = row.row.card_no;
+      } else if (this.dialog3_tag_key == 1) {
+        this.dialog3_a_ = row.row.name;
+        this.dialog3_b_ = row.row.license_plate_number;
+        this.dialog3_c_ = row.row.card_no;
+      }
+    },
+    cell_click__: function(row, column) {
+      this.dialog3_tableData.push(row.row);
+      var tag = {};
+      this.dialog3_tableData = this.dialog3_tableData.reduce(function(
+        item,
+        next
+      ) {
+        tag[next.service_item_name]
+          ? ""
+          : (tag[next.service_item_name] = true && item.push(next)); //&&运算符,若前面不为true则会跳过后面运算
+        return item;
+      },
+      []);
+    },
+    dialog_a_change: function(s) {
+      this.dialog_a_id = s;
+      for (let i in this.dialog_a_select) {
+        if (this.dialog_a_select[i].id == s) {
+          this.dialog_d = this.dialog_a_select[i].recharge;
+          this.dialog_e = this.dialog_a_select[i].giving;
+        }
+      }
+    },
+    dialog_g_change: function(s) {
+      this.dialog_g_id = s;
+    },
+    dialog1_b_change: function(s) {
+      this.dialog1_b_id = s;
+      for (let i in this.dialog1_b_select) {
+        if (this.dialog1_b_select[i].id == s) {
+          this.dialog1_e = this.dialog1_b_select[i].price;
+          // this.dialog1_b = this.dialog1_b_select[i].price;
+        }
+      }
+    },
+    dialog1_b_change_2: function(s) {
+      this.dialog1_b_id = s;
+      for (let i in this.dialog1_b_select) {
+        if (this.dialog1_b_select[i].id == s) {
+          // this.dialog1_e = this.dialog1_b_select[i].price;
+          this.dialog3_b = this.dialog1_b_select[i].price;
+        }
+      }
+    },
+    dialog_pb_b_change: function() {
+      if (this.dialog) {
+        this.dialog_pb_g = this.dialog_d - this.dialog_pb_b;
+      } else if (this.dialog1) {
+        this.dialog_pb_g = this.dialog1_e - this.dialog_pb_b;
+      } else if (this.dialog2) {
+        this.dialog_pb_g = this.dialog2_c - this.dialog_pb_b;
+      } else if (this.dialog3) {
+        this.dialog_pb_g = this.dialog3_b - this.dialog_pb_b;
+      }
+    },
+    tab_click: function(s) {
+      if (s.name === "one") {
+        this.dialog3_tag_key = s.index;
+        this.tableData1 = []
+      } else if (s.name === "two") {
+        this.dialog3_tag_key = s.index;
+        this.tableData1 = []
+      }
+    },
+    edit_actived: function(row, column) {
+      this.s_two = this.dialog3_tableData[row.rowIndex].dialog3_two;
+      this.s_four = this.dialog3_tableData[row.rowIndex].dialog3_four;
+    },
+    edit_closed: function(row, column) {
+      this.dialog3_tableData[row.rowIndex].dialog3_three =
+        this.dialog3_tableData[row.rowIndex].dialog3_two *
+        this.dialog3_tableData[row.rowIndex].price;
+      this.dialog3_tableData[
+        row.rowIndex
+      ].dialog3_four = this.dialog3_tableData[row.rowIndex].dialog3_three;
+      if (this.dialog3_tableData[row.rowIndex].dialog3_two != this.s_two) {
+        this.dialog3_tableData[row.rowIndex].dialog3_four =
+          this.dialog3_tableData[row.rowIndex].dialog3_two *
+          this.dialog3_tableData[row.rowIndex].dialog3_four;
+      } else if (
+        this.dialog3_tableData[row.rowIndex].dialog3_four != this.s_four
+      ) {
+        this.dialog3_tableData[
+          row.rowIndex
+        ].dialog3_four = this.dialog3_tableData[row.rowIndex].dialog3_four;
+      }
+    },
+    dialog_modify: function(scope) {
+      this.$message("此功能已废弃，请点击下拉选择新增！");
+    },
+    dialog_del: function(scope) {
+      if (scope.row.dialog3_one === "默认项目") {
+        this.$message("请勿删除默认项目");
+        return;
+      } else {
+        this.dialog3_tableData.splice(scope.rowIndex, 1);
+      }
+    },
+    show_dialog: function() {
+      this.dialog_pb = true;
+      if (this.dialog) {
+        this.dialog_pb_b = this.dialog_d;
+      } else if (this.dialog1) {
+        this.dialog_pb_b = this.dialog1_e;
+      } else if (this.dialog2) {
+        this.dialog_pb_b = this.dialog2_c;
+      } else if (this.dialog3) {
+        this.dialog_pb_b = this.dialog_d;
+      }
+      this.$axios
+        .post(
+          this.$store.state.domainName_http +
+            "/StoreAdmin/Customer/getMembershipCardSelect",
+          { search: this.buckle_card },
+          { withCredentials: true }
+        )
+        .then(data => {
+          if (data.data.code === 200) {
+            this.tableData2 = data.data.data.data;
+          } else {
+            this.$message.error(data.msg);
+          }
+        })
+        .catch(data => {
+          this.$message.error("抱歉网络错误,请检查网络后重试！");
+        });
+    },
+    dialog_enter: function() {
+      if (this.dialog) {
+        let url = this.dialog_http().url;
+        let value = this.dialog_http().value;
+        this.$axios
+          .post(this.$store.state.domainName_http + url, value, {
+            withCredentials: true
+          })
+          .then(data => {
+            if (data.data.code === 200) {
+              Object.assign(this.$data, this.$options.data());
+              this.$message.success(data.data.msg);
+            } else {
+              this.$message.error(data.data.msg);
+            }
+          })
+          .catch(data => {
+            Object.assign(this.$data, this.$options.data());
+            this.$message.error("抱歉网络错误,请检查网络后重试！");
+          });
+      } else if (this.dialog1) {
+        let url = this.dialog1_http().url;
+        let value = this.dialog1_http().value;
+        this.$axios
+          .post(this.$store.state.domainName_http + url, value, {
+            withCredentials: true
+          })
+          .then(data => {
+            if (data.data.code === 200) {
+              Object.assign(this.$data, this.$options.data());
+              this.$message.success(data.data.msg);
+            } else {
+              this.$message.error(data.data.msg);
+            }
+          })
+          .catch(data => {
+            Object.assign(this.$data, this.$options.data());
+            this.$message.error("抱歉网络错误,请检查网络后重试！");
+          });
+      } else if (this.dialog2) {
+        let url = this.dialog2_http().url;
+        let value = this.dialog2_http().value;
+        this.$axios
+          .post(this.$store.state.domainName_http + url, value, {
+            withCredentials: true
+          })
+          .then(data => {
+            if (data.data.code === 200) {
+              Object.assign(this.$data, this.$options.data());
+              this.$message.success(data.data.msg);
+            } else {
+              this.$message.error(data.data.msg);
+            }
+          })
+          .catch(data => {
+            Object.assign(this.$data, this.$options.data());
+            this.$message.error("抱歉网络错误,请检查网络后重试！");
+          });
+      } else if (this.dialog3) {
+        let url = this.dialog3_http().url;
+        let value = this.dialog3_http().value;
+        this.$axios
+          .post(this.$store.state.domainName_http + url, value, {
+            withCredentials: true
+          })
+          .then(data => {
+            if (data.data.code === 200) {
+              Object.assign(this.$data, this.$options.data());
+              this.$message.success(data.data.msg);
+            } else {
+              this.$message.error(data.data.msg);
+            }
+          })
+          .catch(data => {
+            Object.assign(this.$data, this.$options.data());
+            this.$message.error("抱歉网络错误,请检查网络后重试！");
+          });
+      }
+    },
+    dialog_http: function() {
+      return {
+        url: "/StoreAdmin/Customer/cardTransaction",
+        value: {
+          member_id: this.customer_id,
+          card_no: this.dialog_b,
+          card_id: this.dialog_a_id,
+          recharge: this.dialog_d,
+          giving: this.dialog_e,
+          integral: this.dialog_f,
+          password: this.dialog_c,
+          commission_staff_id: this.dialog_g_id,
+          pay_card_id: this.buckle_id,
+          pay_card_no: this.buckle_card,
+          pay_card_password: this.dialog_pb_f,
+          remark: this.dialog_h,
+          cash: this.dialog_pb_b,
+          unionpay: this.dialog_pb_c,
+          credit: this.dialog_pb_d,
+          pay_card: this.dialog_pb_e,
+          wechat_pay: this.dialog_pb_wx,
+          alipay: this.dialog_pb_zfb
+        }
+      };
+    },
+    dialog1_http: function() {
+      return {
+        url: "/StoreAdmin/Customer/totalTimeCardTransaction",
+        value: {
+          member_id: this.customer_id,
+          card_no: this.dialog1_c,
+          card_id: this.dialog_a_id,
+          package_price: this.dialog1_e,
+          discount_amount: this.dialog1_f,
+          integral: this.dialog1_g,
+          password: this.dialog1_d,
+          commission_staff_id: this.dialog_g_id,
+          remark: this.dialog1_i,
+          package_id: this.dialog1_b_id,
+          pay_card_id: this.buckle_id,
+          pay_card_no: this.buckle_card,
+          pay_card_password: this.dialog_pb_f,
+          cash: this.dialog_pb_b,
+          unionpay: this.dialog_pb_c,
+          credit: this.dialog_pb_d,
+          pay_card: this.dialog_pb_e,
+          wechat_pay: this.dialog_pb_wx,
+          alipay: this.dialog_pb_zfb
+        }
+      };
+    },
+    dialog2_http: function() {
+      return {
+        url: "/StoreAdmin/Customer/cardRenewal",
+        value: {
+          id: this.customer_id_,
+          recharge: this.dialog2_c,
+          giving: this.dialog2_d,
+          integral: this.dialog2_e,
+          commission_staff_id: this.dialog_g_id,
+          remark: this.dialog2_f
+        }
+      };
+    },
+    dialog3_http: function() {
+      if (this.dialog3_tag_key == 0) {
+        return {
+          url: "/StoreAdmin/Customer/totalTimeCardRenewal",
+          value: {
+            membership_card_id: this.customer_id_,
+            package_price: this.dialog3_b,
+            discount_amount: this.dialog3_c,
+            integral: this.dialog3_d,
+            commission_staff_id: this.dialog_g_id,
+            package_id: this.dialog1_b_id,
+            pay_card_id: this.buckle_id
+          }
+        };
+      } else if (this.dialog3_tag_key == 1) {
+        return {
+          url: "/StoreAdmin/Customer/TotalTimeCardItemRenewal",
+          value: {
+            pay_card_id: this.buckle_id,
+            commission_staff_id: this.dialog_g_id,
+            amount: this.dialog3_d_,
+            membership_card_id: this.customer_id_,
+            item_data: this.dialog3_tableData.slice(1)
+          }
+        };
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+#Member_huiyuanbanka {
+  margin-top: 10%;
+}
+.mouse-class {
+  border: 1px solid #99ffff;
+  cursor: pointer;
+}
+.el-divider {
+  width: 60%;
+}
+.el-select {
+  width: 100%;
+}
+</style>

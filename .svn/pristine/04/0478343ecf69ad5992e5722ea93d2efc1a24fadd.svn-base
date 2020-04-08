@@ -1,0 +1,132 @@
+<!--  -->
+<template>
+  <div>
+    <el-dialog  :visible.sync="visible" @close="close">
+      <el-input
+        placeholder="请输入关键字"
+        v-model="search_value"
+        @input="search"
+        clearable>
+        <template slot="prepend">关键字搜索
+        </template>
+      </el-input>
+      <!-- <div style="display:flex"> -->
+      <el-row >
+        <el-col :span="20" style="">
+          <mytable
+            :check_box="false"
+            :height="300"
+            :operation="false"
+            :tableTitle="getProductSelectTitle"
+            :tableData="getProductSelectData"
+            @resData="resDataProductSelect"
+            @handlePageChange="handlePageChangeProductSelect"
+            @cell_click="cell_click_Product"
+            ref="mytable"
+          />
+        </el-col>
+        <el-col :span="4" >
+          <div class="tree_wrapper">
+            <el-tree
+              :data="getProductClassifyList"
+              :props="{children: 'children', label: 'classify_name'}"
+              @node-click="handleNodeClick"
+            ></el-tree>
+          </div>
+
+        </el-col>
+        </el-row>
+      <!-- </div> -->
+
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import mytable from "../mytable";
+export default {
+  data() {
+    return {
+      visible:this.dialogVisible,
+      search_value:"",
+      getProductSelectTitle: [
+        { key: "product_name", title: "商品名称", min_width: "70" },
+        { key: "product_type", title: "型号规格", min_width: "70" },
+        { key: "inventory", title: "库存数量", min_width: "70" },
+        { key: "product_price", title: "销售价格", min_width: "70" },
+        { key: "wholesale_price", title: "批发价格", min_width: "70" },
+        { key: "product_code", title: "商品编码", min_width: "120" },
+        { key: "barcode", title: "条形码", min_width: "130" }
+      ],
+      getProductSelectData: [],
+      getProductClassifyList: [],
+    };
+  },
+  components: {
+    mytable
+  },
+  props: {
+    dialogVisible: {
+      type: Boolean,
+      default: false
+    }
+  },
+  mounted() {},
+  methods: {
+    close() {
+      this.$emit("close", this.visible)
+    },
+    search() {
+      this.handlePageChangeProductSelect({search:this.search_value})
+    },
+    openProductSelect() {
+      this.dialogVisible = !this.dialogVisible
+      this.search_value = ""
+      this.handlePageChangeProductSelect()
+    },
+    handleNodeClick(data = {}) {
+      let { classify_id } = data;
+      this.handlePageChangeProductSelect({ classify_id });
+    },
+    cell_click_Product(scope) {
+      this.$emit("cell_click", scope);
+    },
+    resDataProductSelect(data) {
+      this.getProductSelectData = data;
+    },
+    getProductClassify() {
+      this.$api
+      .HttpPost("/StoreAdmin/Inventory/getProductClassifyList", {})
+      .then(v => {
+        this.getProductClassifyList = v.data.data;
+      });
+    },
+    handlePageChangeProductSelect(data = {}) {
+      this.$nextTick(() => {
+        this.$refs.mytable.findList(
+          this.$api.yuming + "/StoreAdmin/Statistics/getProductSelect",
+          data
+        );
+      })
+    },
+  },
+  watch:{
+    dialogVisible:{
+      handler(val) {
+        this.visible = val
+        if(val) {
+          this.handlePageChangeProductSelect()
+          this.getProductClassify()
+        }
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.tree_wrapper{
+  border: 1px solid #e0e0e0;
+  margin: 10px 0 0 10px;
+  box-shadow: 0 5px 2px -5px rgba(0, 0, 0, 0.5);
+}</style>

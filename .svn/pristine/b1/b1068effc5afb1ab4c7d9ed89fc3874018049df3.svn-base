@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=0.6,maximum-scale=1.0,minimum-scale=0.6"><!-- user-scalable=no -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="author" content="HengFuBao KeJiYouXianGongSi" />
+    <meta name="keywords" content="hfb">
+    <meta name="description" content="Hengfubao auto repair management software">
+    <link rel="shortcut icon" type="images/x-icon" href="./static/favicon.ico">
+<!--    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/vxe-table/lib/index.css"> -->
+
+    <title>智能统车</title>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
